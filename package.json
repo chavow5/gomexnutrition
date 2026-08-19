@@ -1,0 +1,23 @@
+{
+  "name": "gomexnutrition",
+  "version": "1.0.0",
+  "description": "GOMEX Nutrition - Plataforma integral de E-commerce y Sistema POS / Gestión Comercial",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node test.js"
+  },
+  "keywords": [
+    "ecommerce",
+    "pos",
+    "nutrition",
+    "supplements",
+    "gomex",
+    "vanilla-js",
+    "point-of-sale",
+    "supabase"
+  ],
+  "author": "GOMEX Nutrition",
+  "license": "MIT"
+}
