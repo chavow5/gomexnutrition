@@ -93,6 +93,9 @@ gomexnutrition/
 │   ├── cajaGomitas.jpg     # Imagen de Multivitamínico
 │   ├── bolsaGomita.jpg     # Imagen de Sleep & Recovery
 │   └── gomitas.jpg         # Imagen de Pack Trío
+├── supabase/               # Scripts SQL y migraciones de Supabase PostgreSQL
+│   ├── schema.sql          # DDL completo, tablas, RLS, Realtime y Seeds
+│   └── README.md           # Guía de inicialización de Base de Datos
 ├── index.html              # Aplicación SPA completa (E-Commerce + POS)
 ├── server.js               # Servidor HTTP local con seguridad reforzada
 ├── test.js                 # Suite automatizada de pruebas

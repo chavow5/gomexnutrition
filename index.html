@@ -6942,13 +6942,13 @@
 
       <div
         style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 14px; margin-bottom: 18px; font-size: 0.88rem; line-height: 1.5; color: #bae6fd;">
-        ⚡ <strong>PostgreSQL en Tiempo Real & Cloud Storage:</strong> Proyecto <code>gomex-nutricion</code> conectado en la región <strong>sa-east-1 (São Paulo)</strong>. Tus productos, catálogo, ventas y colaboradores están sincronizados en la nube con Supabase.
+        ⚡ <strong>PostgreSQL en Tiempo Real & Cloud Storage:</strong> Base de datos Supabase conectada. Tus productos, catálogo, ventas y colaboradores sincronizados en la nube.
       </div>
 
       <form onsubmit="handleSaveSupabaseConfig(event)">
         <div class="form-group">
           <label>Supabase Project URL</label>
-          <input type="text" id="sbUrlInput" class="input-field" placeholder="https://vdghijvwhrbiorytnpof.supabase.co" required>
+          <input type="text" id="sbUrlInput" class="input-field" placeholder="https://jdhscjhashyqmnmuksuk.supabase.co" required>
         </div>
 
         <div class="form-group">
@@ -7253,9 +7253,9 @@
     // INTEGRACIÓN Y SINCRONIZACIÓN SUPABASE CLOUD (POSTGRESQL)
     // ==========================================
     const defaultSupabaseConfig = {
-      url: "https://vdghijvwhrbiorytnpof.supabase.co",
-      anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkZ2hpanZ3aHJiaW9yeXRucG9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNjM4NjMsImV4cCI6MjEwMjYzOTg2M30.3limv7B6kynxtUTVURskHwCvGrxvuW5LMkpqjfbYudw",
-      projectId: "vdghijvwhrbiorytnpof",
+      url: "https://jdhscjhashyqmnmuksuk.supabase.co",
+      anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkaHNjamhhc2h5cW1ubXVrc3VrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNDcwODAsImV4cCI6MjEwMjcyMzA4MH0.Jr-bD7XquS34_8GIblgGCfsB-SoPxvb01WtmSG4QhEk",
+      projectId: "jdhscjhashyqmnmuksuk",
       region: "sa-east-1 (São Paulo)"
     };
 
@@ -7490,7 +7490,14 @@
       try {
         const savedConfig = localStorage.getItem('gomex_supabase_config');
         if (savedConfig) {
-          supabaseConfig = { ...defaultSupabaseConfig, ...JSON.parse(savedConfig) };
+          const parsed = JSON.parse(savedConfig);
+          // Si no tiene el nuevo projectId activo, forzar la nueva configuración oficial
+          if (!parsed || !parsed.url || parsed.projectId !== 'jdhscjhashyqmnmuksuk') {
+            supabaseConfig = { ...defaultSupabaseConfig };
+            localStorage.setItem('gomex_supabase_config', JSON.stringify(supabaseConfig));
+          } else {
+            supabaseConfig = { ...defaultSupabaseConfig, ...parsed };
+          }
         } else {
           supabaseConfig = { ...defaultSupabaseConfig };
         }
@@ -7791,9 +7798,9 @@
     function openSupabaseConfigModal() {
       const modal = document.getElementById('supabaseConfigModal');
       if (modal) {
-        document.getElementById('sbUrlInput').value = supabaseConfig.url || '';
+        document.getElementById('sbUrlInput').value = supabaseConfig.url || 'https://jdhscjhashyqmnmuksuk.supabase.co';
         document.getElementById('sbAnonKeyInput').value = supabaseConfig.anonKey || '';
-        document.getElementById('sbProjectIdInput').value = supabaseConfig.projectId || 'vdghijvwhrbiorytnpof';
+        document.getElementById('sbProjectIdInput').value = supabaseConfig.projectId || 'jdhscjhashyqmnmuksuk';
         document.getElementById('sbRegionInput').value = supabaseConfig.region || 'sa-east-1 (São Paulo)';
         modal.style.display = 'flex';
       }
@@ -7806,10 +7813,21 @@
 
     function handleSaveSupabaseConfig(event) {
       event.preventDefault();
+      const rawUrl = document.getElementById('sbUrlInput').value.trim();
+      let derivedProjectId = 'jdhscjhashyqmnmuksuk';
+      try {
+        if (rawUrl.startsWith('http')) {
+          const urlObj = new URL(rawUrl);
+          derivedProjectId = urlObj.hostname.split('.')[0] || 'jdhscjhashyqmnmuksuk';
+        }
+      } catch (e) {
+        // fallback
+      }
+
       supabaseConfig = {
-        url: document.getElementById('sbUrlInput').value.trim(),
+        url: rawUrl,
         anonKey: document.getElementById('sbAnonKeyInput').value.trim(),
-        projectId: document.getElementById('sbProjectIdInput').value.trim() || 'vdghijvwhrbiorytnpof',
+        projectId: derivedProjectId,
         region: document.getElementById('sbRegionInput').value.trim() || 'sa-east-1 (São Paulo)'
       };
 

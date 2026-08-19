@@ -45,7 +45,9 @@ async function runTests() {
     'public/bolsaGomitas.jpg',
     'public/cajaGomitas.jpg',
     'public/bolsaGomita.jpg',
-    'public/gomitas.jpg'
+    'public/gomitas.jpg',
+    'supabase/schema.sql',
+    'supabase/README.md'
   ];
 
   essentialFiles.forEach(file => {
@@ -146,9 +148,40 @@ async function runTests() {
   assert(isJsValid, 'Bloque principal de JavaScript parsea sin errores de sintaxis', jsError);
 
   // -------------------------------------------------------------
-  // SUITE 6: Servidor HTTP Local y Manejo de Rutas
+  // SUITE 6: Esquema SQL de Supabase y Migración
   // -------------------------------------------------------------
-  console.log('\n🚀 SUITE 6: Servidor HTTP Local, Seguridad y MIME Types');
+  console.log('\n🗄️ SUITE 6: Integridad del Esquema SQL de Supabase');
+  const sqlPath = path.join(rootDir, 'supabase', 'schema.sql');
+  const sqlExists = fs.existsSync(sqlPath);
+  assert(sqlExists, 'Archivo supabase/schema.sql existe');
+
+  if (sqlExists) {
+    const sqlContent = fs.readFileSync(sqlPath, 'utf8');
+    const requiredTables = [
+      'categories',
+      'products',
+      'clients',
+      'sales',
+      'collaborators',
+      'offers',
+      'expenses',
+      'store_config'
+    ];
+
+    requiredTables.forEach(table => {
+      const hasTable = sqlContent.includes(`CREATE TABLE IF NOT EXISTS public.${table}`);
+      assert(hasTable, `Tabla declarada en schema.sql: public.${table}`);
+    });
+
+    assert(sqlContent.includes('ROW LEVEL SECURITY'), 'Políticas de Row Level Security (RLS) configuradas');
+    assert(sqlContent.includes('ALTER PUBLICATION supabase_realtime'), 'Publicación en tiempo real (supabase_realtime) configurada');
+    assert(sqlContent.includes('INSERT INTO public.products'), 'Datos semilla de productos incluidos');
+  }
+
+  // -------------------------------------------------------------
+  // SUITE 7: Servidor HTTP Local y Manejo de Rutas
+  // -------------------------------------------------------------
+  console.log('\n🚀 SUITE 7: Servidor HTTP Local, Seguridad y MIME Types');
 
   const testPort = 3199;
   const MIME_TYPES = {
