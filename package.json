@@ -4,6 +4,7 @@
   "description": "GOMEX Nutrition - Plataforma integral de E-commerce y Sistema POS / Gestión Comercial",
   "main": "server.js",
   "scripts": {
+    "build": "node -e \"console.log('Build completed')\"",
     "start": "node server.js",
     "dev": "node server.js",
     "test": "node test.js"
