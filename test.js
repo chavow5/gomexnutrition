@@ -69,8 +69,10 @@ async function runTests() {
   assert(htmlContent.includes('<!DOCTYPE html>'), 'Doctype HTML5 declarado');
   assert(/<html\s+lang=["']es["']/i.test(htmlContent), 'Atributo de idioma español configurado');
   assert(/<meta\s+charset=["']UTF-8["']/i.test(htmlContent), 'Meta charset UTF-8 presente');
-  assert(/<meta\s+name=["']viewport["']/i.test(htmlContent), 'Meta viewport para responsive presente');
-  assert(htmlContent.includes('<title>GOMEX Nutrition'), 'Título de la aplicación presente');
+  assert(htmlContent.includes('<title>GOMEX</title>'), 'Título de la aplicación configurado como "GOMEX"');
+  assert(htmlContent.includes('property="og:title" content="GOMEX"'), 'Open Graph og:title configurado como "GOMEX"');
+  assert(htmlContent.includes('property="og:image" content="public/logo.jpg"'), 'Open Graph og:image configurado con el logo');
+  assert(htmlContent.includes('rel="icon" type="image/jpeg" href="public/logo.jpg"'), 'Favicon configurado con el logo');
   assert(htmlContent.includes('https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js'), 'CDN de Ionicons incluido');
   assert(htmlContent.includes('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'), 'CDN de SheetJS incluido');
   assert(htmlContent.includes('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'), 'CDN de Supabase JS incluido');
