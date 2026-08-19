@@ -7076,6 +7076,229 @@
     let supabaseClient = null;
     let isSupabaseConnected = false;
 
+    // ==========================================
+    // HELPERS DE TRANSFORMACIÓN PARA SUPABASE
+    // ==========================================
+    function dbProduct(p) {
+      return {
+        id: p.id,
+        code: p.code || '',
+        internal_code: p.internalCode || p.internal_code || '',
+        name: p.name || '',
+        category: p.category || '',
+        cost: Number(p.cost) || 0,
+        tax_rate: Number(p.taxRate !== undefined ? p.taxRate : (p.tax_rate || 21)),
+        margin: Number(p.margin) || 0,
+        price: Number(p.price) || 0,
+        stock: Number(p.stock) || 0,
+        unit: p.unit || '',
+        flavor: p.flavor || '',
+        portion: p.portion || '',
+        description: p.description || '',
+        activos: Array.isArray(p.activos) ? p.activos : (typeof p.activos === 'string' && p.activos ? p.activos.split(',').map(s => s.trim()) : []),
+        image: p.image || '',
+        featured: !!p.featured,
+        badge: p.badge || ''
+      };
+    }
+
+    function dbClient(c) {
+      return {
+        cuit: c.cuit || `CLI-${Date.now().toString().slice(-6)}`,
+        name: c.name || 'Consumidor Final',
+        gym: c.gym || '-',
+        location: c.location || '-',
+        province: c.province || '-',
+        phone: c.phone || '-',
+        email: c.email || '-'
+      };
+    }
+
+    function dbSale(s) {
+      const saleId = String(s.id || s.ticketNo || ('CX-' + Date.now()));
+      const invoiceNo = s.ticketNo || (saleId.startsWith('CX-') ? saleId : `CX-0001-${saleId}`);
+      const saleTotal = Number(s.total) || 0;
+      const subtotalVal = s.subtotal !== undefined ? Number(s.subtotal) : Math.round(saleTotal / 1.21);
+      const taxVal = s.tax !== undefined ? Number(s.tax) : (saleTotal - subtotalVal);
+
+      return {
+        id: saleId,
+        date: s.date || new Date().toLocaleString(),
+        seller: s.seller || 'admin',
+        seller_name: s.sellerName || s.seller || 'Administrador GOMEX',
+        client: s.client || 'Consumidor Final',
+        payment_method: s.paymentMethod || s.method || 'Efectivo',
+        lines: s.lines || s.items || [],
+        items: s.items || s.lines || [],
+        total: saleTotal,
+        subtotal: subtotalVal,
+        tax: taxVal,
+        ticket_no: invoiceNo
+      };
+    }
+
+    function dbColab(col) {
+      return {
+        id: col.id,
+        name: col.name,
+        username: col.username,
+        password: col.password,
+        role: col.role || 'Administrador',
+        permissions: col.permissions || { pos: true, ventas: true, presupuesto: true, notas: true, catalogo: true, stock: true, clientes: true, colaboradores: true, importaciones: true, config: true }
+      };
+    }
+
+    function dbOffer(o) {
+      return {
+        product_id: Number(o.productId || o.product_id),
+        offer_price: Number(o.offerPrice || o.offer_price || 0),
+        discount: Number(o.discount || 0),
+        badge: o.badge || ''
+      };
+    }
+
+    function dbStoreConfig() {
+      return {
+        id: 'main',
+        data: {
+          storeConfig,
+          bankConfig,
+          budgets,
+          orders,
+          creditNotes,
+          remitos,
+          expenses,
+          ecomOrderCounter,
+          boxSession
+        }
+      };
+    }
+
+    // ==========================================
+    // FUNCIONES ATÓMICAS DE SINCRONIZACIÓN
+    // ==========================================
+    async function syncProductToSupabase(p) {
+      if (!isSupabaseConnected || !supabaseClient) return;
+      try {
+        const { error } = await supabaseClient.from('products').upsert(dbProduct(p), { onConflict: 'id' });
+        if (error) console.warn("Supabase sync product error:", error.message);
+      } catch (err) {
+        console.warn("Error syncProductToSupabase:", err);
+      }
+    }
+
+    async function deleteProductFromSupabase(id) {
+      if (!isSupabaseConnected || !supabaseClient) return;
+      try {
+        await supabaseClient.from('products').delete().eq('id', id);
+        console.log(`⚡ Producto ID ${id} eliminado de Supabase.`);
+      } catch (err) {
+        console.warn("Error deleteProductFromSupabase:", err);
+      }
+    }
+
+    async function syncClientToSupabase(c) {
+      if (!isSupabaseConnected || !supabaseClient) return;
+      try {
+        const row = dbClient(c);
+        const { error } = await supabaseClient.from('clients').upsert(row, { onConflict: 'cuit' });
+        if (error) console.warn("Supabase sync client error:", error.message);
+        else console.log(`⚡ Cliente "${c.name}" sincronizado en Supabase Cloud.`);
+      } catch (err) {
+        console.warn("Error syncClientToSupabase:", err);
+      }
+    }
+
+    async function deleteClientFromSupabase(cuit) {
+      if (!isSupabaseConnected || !supabaseClient) return;
+      try {
+        await supabaseClient.from('clients').delete().eq('cuit', cuit);
+        console.log(`⚡ Cliente CUIT ${cuit} eliminado de Supabase.`);
+      } catch (err) {
+        console.warn("Error deleteClientFromSupabase:", err);
+      }
+    }
+
+    async function syncSaleToSupabase(s) {
+      if (!isSupabaseConnected || !supabaseClient) return;
+      try {
+        const row = dbSale(s);
+        const { error } = await supabaseClient.from('sales').upsert(row, { onConflict: 'id' });
+        if (error) console.warn("Supabase sync sale error:", error.message);
+        else console.log(`⚡ Venta "${row.id}" sincronizada en Supabase Cloud.`);
+      } catch (err) {
+        console.warn("Error syncSaleToSupabase:", err);
+      }
+    }
+
+    async function deleteSaleFromSupabase(saleId) {
+      if (!isSupabaseConnected || !supabaseClient) return;
+      try {
+        await supabaseClient.from('sales').delete().eq('id', String(saleId));
+        console.log(`⚡ Venta ${saleId} eliminada de Supabase.`);
+      } catch (err) {
+        console.warn("Error deleteSaleFromSupabase:", err);
+      }
+    }
+
+    async function syncColabToSupabase(col) {
+      if (!isSupabaseConnected || !supabaseClient) return;
+      try {
+        const { error } = await supabaseClient.from('collaborators').upsert(dbColab(col), { onConflict: 'id' });
+        if (error) console.warn("Supabase sync colab error:", error.message);
+      } catch (err) {
+        console.warn("Error syncColabToSupabase:", err);
+      }
+    }
+
+    async function deleteColabFromSupabase(id) {
+      if (!isSupabaseConnected || !supabaseClient) return;
+      try {
+        await supabaseClient.from('collaborators').delete().eq('id', id);
+        console.log(`⚡ Colaborador ID ${id} eliminado de Supabase.`);
+      } catch (err) {
+        console.warn("Error deleteColabFromSupabase:", err);
+      }
+    }
+
+    async function syncOfferToSupabase(o) {
+      if (!isSupabaseConnected || !supabaseClient) return;
+      try {
+        const { error } = await supabaseClient.from('offers').upsert(dbOffer(o), { onConflict: 'product_id' });
+        if (error) console.warn("Supabase sync offer error:", error.message);
+      } catch (err) {
+        console.warn("Error syncOfferToSupabase:", err);
+      }
+    }
+
+    async function deleteOfferFromSupabase(productId) {
+      if (!isSupabaseConnected || !supabaseClient) return;
+      try {
+        await supabaseClient.from('offers').delete().eq('product_id', Number(productId));
+      } catch (err) {
+        console.warn("Error deleteOfferFromSupabase:", err);
+      }
+    }
+
+    async function syncCategoryToSupabase(catName) {
+      if (!isSupabaseConnected || !supabaseClient || !catName) return;
+      try {
+        await supabaseClient.from('categories').upsert({ name: catName }, { onConflict: 'name' });
+      } catch (err) {
+        console.warn("Error syncCategoryToSupabase:", err);
+      }
+    }
+
+    async function syncStoreConfigToSupabase() {
+      if (!isSupabaseConnected || !supabaseClient) return;
+      try {
+        const row = dbStoreConfig();
+        await supabaseClient.from('store_config').upsert(row, { onConflict: 'id' });
+      } catch (err) {
+        console.warn("Error syncStoreConfigToSupabase:", err);
+      }
+    }
+
     async function initSupabase() {
       try {
         const savedConfig = localStorage.getItem('gomex_supabase_config');
@@ -7122,44 +7345,151 @@
     async function fetchSupabaseData() {
       if (!supabaseClient || !isSupabaseConnected) return;
       try {
+        // 1. PRODUCTOS
         const { data: cloudProducts, error: prodErr } = await supabaseClient.from('products').select('*').order('id');
         if (!prodErr && cloudProducts && cloudProducts.length > 0) {
           products = cloudProducts.map(p => ({
             ...p,
             internalCode: p.internal_code || p.internalCode,
-            taxRate: p.tax_rate !== undefined ? p.tax_rate : (p.taxRate || 21)
+            taxRate: p.tax_rate !== undefined ? p.tax_rate : (p.taxRate || 21),
+            activos: Array.isArray(p.activos) ? p.activos : []
           }));
-          saveStorageData(false);
-          renderEcommerceProducts();
-          renderPOSProducts();
-          renderStockTable();
-          renderDBProducts();
-          renderCatalog();
           console.log(`⚡ Sincronizados ${cloudProducts.length} productos desde Supabase Cloud.`);
+        } else if (!prodErr && (!cloudProducts || cloudProducts.length === 0)) {
+          // Sembrar productos oficiales iniciales si la tabla en Supabase está vacía
+          const seedProds = officialSampleProducts.map(dbProduct);
+          await supabaseClient.from('products').upsert(seedProds);
+          products = JSON.parse(JSON.stringify(officialSampleProducts));
         }
 
+        // 2. CLIENTES
+        const { data: cloudClients, error: clientErr } = await supabaseClient.from('clients').select('*').order('name');
+        if (!clientErr && cloudClients && cloudClients.length > 0) {
+          clients = cloudClients.map(c => ({
+            cuit: c.cuit || '00-00000000-0',
+            name: c.name || 'Consumidor Final',
+            gym: c.gym || '-',
+            location: c.location || '-',
+            province: c.province || '-',
+            phone: c.phone || '-',
+            email: c.email || '-'
+          }));
+          console.log(`⚡ Sincronizados ${cloudClients.length} clientes desde Supabase Cloud.`);
+        } else if (!clientErr && (!cloudClients || cloudClients.length === 0)) {
+          // Sembrar cliente por defecto si está vacío
+          const defaultClient = {
+            cuit: '00-00000000-0',
+            name: 'Consumidor Final',
+            gym: 'GOMEX Headquarter',
+            location: 'Venta Mostrador',
+            province: 'Buenos Aires',
+            phone: '-',
+            email: '-'
+          };
+          await supabaseClient.from('clients').upsert(dbClient(defaultClient));
+          clients = [defaultClient];
+        }
+
+        // 3. VENTAS
         const { data: cloudSales, error: salesErr } = await supabaseClient.from('sales').select('*').order('created_at', { ascending: false });
         if (!salesErr && cloudSales && cloudSales.length > 0) {
           sales = cloudSales.map(s => ({
             id: s.id,
+            ticketNo: s.ticket_no || s.id,
             date: s.date,
             seller: s.seller,
+            sellerName: s.seller_name || s.seller || 'Administrador GOMEX',
             client: s.client,
             paymentMethod: s.payment_method || s.paymentMethod,
-            lines: s.lines || [],
-            total: Number(s.total) || 0
+            method: s.payment_method || s.paymentMethod,
+            lines: s.lines || s.items || [],
+            items: s.items || s.lines || [],
+            total: Number(s.total) || 0,
+            subtotal: Number(s.subtotal !== undefined ? s.subtotal : Math.round(Number(s.total || 0) / 1.21)),
+            tax: Number(s.tax !== undefined ? s.tax : (Number(s.total || 0) - Math.round(Number(s.total || 0) / 1.21)))
           }));
-          saveStorageData(false);
-          renderSalesTable();
-          renderDashboard();
+          console.log(`⚡ Sincronizadas ${cloudSales.length} ventas desde Supabase Cloud.`);
         }
 
-        const { data: cloudCategories, error: catErr } = await supabaseClient.from('categories').select('*');
-        if (!catErr && cloudCategories && cloudCategories.length > 0) {
+        // 4. CATEGORÍAS
+        const { data: cloudCategories, error: catErr } = await supabaseClient.from('categories').select('*').order('name');
+        if (!catErr && cloudCategories && cloudCategories.length >= defaultGomexCategories.length) {
           categories = cloudCategories.map(c => c.name);
-          saveStorageData(false);
-          renderEcommerceCategories();
+        } else if (!catErr) {
+          // Sembrar categorías oficiales en Supabase si faltan
+          const catRows = defaultGomexCategories.map(name => ({ name }));
+          await supabaseClient.from('categories').upsert(catRows, { onConflict: 'name' });
+          categories = [...defaultGomexCategories];
         }
+
+        // 5. COLABORADORES
+        const { data: cloudColabs, error: colabErr } = await supabaseClient.from('collaborators').select('*').order('id');
+        if (!colabErr && cloudColabs && cloudColabs.length > 0) {
+          colaboradores = cloudColabs.map(c => ({
+            id: c.id,
+            name: c.name,
+            username: c.username,
+            password: c.password,
+            role: c.role || 'Administrador',
+            permissions: c.permissions || {
+              pos: true, ventas: true, presupuesto: true, notas: true,
+              catalogo: true, stock: true, clientes: true, colaboradores: true,
+              importaciones: true, config: true
+            }
+          }));
+          console.log(`⚡ Sincronizados ${cloudColabs.length} colaboradores desde Supabase Cloud.`);
+        } else if (!colabErr && (!cloudColabs || cloudColabs.length === 0)) {
+          const colabRows = defaultColaboradores.map(dbColab);
+          await supabaseClient.from('collaborators').upsert(colabRows);
+          colaboradores = [...defaultColaboradores];
+        }
+
+        // 6. OFERTAS
+        const { data: cloudOffers, error: offErr } = await supabaseClient.from('offers').select('*');
+        if (!offErr && cloudOffers && cloudOffers.length > 0) {
+          offers = cloudOffers.map(o => ({
+            productId: Number(o.product_id),
+            offerPrice: Number(o.offer_price || 0),
+            discount: Number(o.discount || 0),
+            badge: o.badge || ''
+          }));
+        }
+
+        // 7. CONFIGURACIÓN Y FINANZAS
+        const { data: cloudConfig, error: cfgErr } = await supabaseClient.from('store_config').select('*').eq('id', 'main').maybeSingle();
+        if (!cfgErr && cloudConfig && cloudConfig.data) {
+          const d = cloudConfig.data;
+          if (d.storeConfig) storeConfig = { ...storeConfig, ...d.storeConfig };
+          if (d.bankConfig) bankConfig = { ...bankConfig, ...d.bankConfig };
+          if (Array.isArray(d.budgets)) budgets = d.budgets;
+          if (Array.isArray(d.orders)) orders = d.orders;
+          if (Array.isArray(d.creditNotes)) creditNotes = d.creditNotes;
+          if (Array.isArray(d.remitos)) remitos = d.remitos;
+          if (Array.isArray(d.expenses)) expenses = d.expenses;
+          if (d.ecomOrderCounter !== undefined) ecomOrderCounter = Number(d.ecomOrderCounter) || 0;
+          if (d.boxSession) boxSession = d.boxSession;
+        }
+
+        // Guardar snapshot en localStorage sin re-sincronizar a la nube
+        saveStorageData(false);
+
+        // Re-renderizar todas las interfaces
+        renderEcommerceProducts();
+        renderPOSProducts();
+        renderStockTable();
+        renderDBProducts();
+        renderCatalog();
+        renderEcommerceCategories();
+        renderCategoriesUI();
+        renderDBClients();
+        populateClientSelect();
+        renderSalesTable();
+        renderDBColaboradores();
+        renderBudgetsTable();
+        renderExpensesTable();
+        renderDashboard();
+        initBankConfigUI();
+        updateStoreConfigPreview();
       } catch (e) {
         console.warn("Error al obtener datos de Supabase:", e);
       }
@@ -7169,15 +7499,16 @@
       if (!supabaseClient || !isSupabaseConnected) return;
       try {
         supabaseClient
-          .channel('gomex-realtime-products')
+          .channel('gomex-realtime-channel')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, async () => {
-            console.log("⚡ Cambio detectado en productos en tiempo real desde Supabase.");
+            console.log("⚡ Cambio en productos detectado en tiempo real.");
             const { data } = await supabaseClient.from('products').select('*').order('id');
             if (data && data.length) {
               products = data.map(p => ({
                 ...p,
                 internalCode: p.internal_code || p.internalCode,
-                taxRate: p.tax_rate !== undefined ? p.tax_rate : (p.taxRate || 21)
+                taxRate: p.tax_rate !== undefined ? p.tax_rate : (p.taxRate || 21),
+                activos: Array.isArray(p.activos) ? p.activos : []
               }));
               saveStorageData(false);
               renderEcommerceProducts();
@@ -7187,22 +7518,81 @@
               renderCatalog();
             }
           })
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, async () => {
+            console.log("⚡ Cambio en clientes detectado en tiempo real.");
+            const { data } = await supabaseClient.from('clients').select('*').order('name');
+            if (data && data.length) {
+              clients = data.map(c => ({
+                cuit: c.cuit || '00-00000000-0',
+                name: c.name || 'Consumidor Final',
+                gym: c.gym || '-',
+                location: c.location || '-',
+                province: c.province || '-',
+                phone: c.phone || '-',
+                email: c.email || '-'
+              }));
+              saveStorageData(false);
+              renderDBClients();
+              populateClientSelect();
+            }
+          })
           .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, async () => {
-            console.log("⚡ Nueva venta registrada en tiempo real en Supabase.");
+            console.log("⚡ Cambio en ventas detectado en tiempo real.");
             const { data } = await supabaseClient.from('sales').select('*').order('created_at', { ascending: false });
             if (data && data.length) {
               sales = data.map(s => ({
                 id: s.id,
+                ticketNo: s.ticket_no || s.id,
                 date: s.date,
                 seller: s.seller,
+                sellerName: s.seller_name || s.seller || 'Administrador GOMEX',
                 client: s.client,
                 paymentMethod: s.payment_method || s.paymentMethod,
-                lines: s.lines || [],
-                total: Number(s.total) || 0
+                method: s.payment_method || s.paymentMethod,
+                lines: s.lines || s.items || [],
+                items: s.items || s.lines || [],
+                total: Number(s.total) || 0,
+                subtotal: Number(s.subtotal !== undefined ? s.subtotal : Math.round(Number(s.total || 0) / 1.21)),
+                tax: Number(s.tax !== undefined ? s.tax : (Number(s.total || 0) - Math.round(Number(s.total || 0) / 1.21)))
               }));
               saveStorageData(false);
               renderSalesTable();
               renderDashboard();
+            }
+          })
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'collaborators' }, async () => {
+            console.log("⚡ Cambio en colaboradores detectado en tiempo real.");
+            const { data } = await supabaseClient.from('collaborators').select('*').order('id');
+            if (data && data.length) {
+              colaboradores = data.map(c => ({
+                id: c.id,
+                name: c.name,
+                username: c.username,
+                password: c.password,
+                role: c.role || 'Administrador',
+                permissions: c.permissions || {
+                  pos: true, ventas: true, presupuesto: true, notas: true,
+                  catalogo: true, stock: true, clientes: true, colaboradores: true,
+                  importaciones: true, config: true
+                }
+              }));
+              saveStorageData(false);
+              renderDBColaboradores();
+            }
+          })
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, async () => {
+            const { data } = await supabaseClient.from('offers').select('*');
+            if (data) {
+              offers = data.map(o => ({
+                productId: Number(o.product_id),
+                offerPrice: Number(o.offer_price || 0),
+                discount: Number(o.discount || 0),
+                badge: o.badge || ''
+              }));
+              saveStorageData(false);
+              renderEcommerceProducts();
+              renderPOSProducts();
+              renderCatalog();
             }
           })
           .subscribe();
@@ -7268,32 +7658,64 @@
         return;
       }
       try {
-        const dbProds = products.map(p => ({
-          id: p.id,
-          code: p.code || '',
-          internal_code: p.internalCode || p.internal_code || '',
-          name: p.name,
-          category: p.category || '',
-          cost: Number(p.cost) || 0,
-          tax_rate: Number(p.taxRate !== undefined ? p.taxRate : (p.tax_rate || 21)),
-          margin: Number(p.margin) || 0,
-          price: Number(p.price) || 0,
-          stock: Number(p.stock) || 0,
-          unit: p.unit || '',
-          flavor: p.flavor || '',
-          portion: p.portion || '',
-          description: p.description || '',
-          activos: p.activos || [],
-          image: p.image || '',
-          featured: !!p.featured,
-          badge: p.badge || ''
-        }));
-        const { error } = await supabaseClient.from('products').upsert(dbProds);
-        if (error) throw error;
-        alert(`⚡ ¡Se sincronizaron con éxito ${products.length} productos en Supabase Cloud PostgreSQL!`);
+        let report = [];
+
+        // 1. Productos
+        if (products.length > 0) {
+          const dbProds = products.map(dbProduct);
+          const { error: pErr } = await supabaseClient.from('products').upsert(dbProds, { onConflict: 'id' });
+          if (pErr) throw pErr;
+          report.push(`${products.length} productos`);
+        }
+
+        // 2. Clientes
+        if (clients.length > 0) {
+          const dbClis = clients.map(dbClient);
+          const { error: cErr } = await supabaseClient.from('clients').upsert(dbClis, { onConflict: 'cuit' });
+          if (cErr) throw cErr;
+          report.push(`${clients.length} clientes`);
+        }
+
+        // 3. Ventas
+        if (sales.length > 0) {
+          const dbSals = sales.map(dbSale);
+          const { error: sErr } = await supabaseClient.from('sales').upsert(dbSals, { onConflict: 'id' });
+          if (sErr) throw sErr;
+          report.push(`${sales.length} ventas`);
+        }
+
+        // 4. Colaboradores
+        if (colaboradores.length > 0) {
+          const dbCols = colaboradores.map(dbColab);
+          const { error: colErr } = await supabaseClient.from('collaborators').upsert(dbCols, { onConflict: 'id' });
+          if (colErr) throw colErr;
+          report.push(`${colaboradores.length} colaboradores`);
+        }
+
+        // 5. Categorías
+        if (categories.length > 0) {
+          const catRows = categories.map(name => ({ name }));
+          const { error: catErr } = await supabaseClient.from('categories').upsert(catRows, { onConflict: 'name' });
+          if (catErr) throw catErr;
+          report.push(`${categories.length} categorías`);
+        }
+
+        // 6. Ofertas
+        if (offers.length > 0) {
+          const offRows = offers.map(dbOffer);
+          const { error: offErr } = await supabaseClient.from('offers').upsert(offRows, { onConflict: 'product_id' });
+          if (offErr) throw offErr;
+          report.push(`${offers.length} ofertas`);
+        }
+
+        // 7. Configuración General
+        await syncStoreConfigToSupabase();
+        report.push("Configuración de tienda y cuentas");
+
+        alert(`⚡ ¡Sincronización Total Exitosa en Supabase Cloud PostgreSQL!\n\nSe subieron a la nube:\n• ` + report.join('\n• '));
         closeSupabaseConfigModal();
       } catch (err) {
-        alert("Error al subir a Supabase: " + err.message);
+        alert("Error al sincronizar con Supabase: " + err.message);
       }
     }
 
@@ -7483,39 +7905,62 @@
         localStorage.setItem('gomex_bank_config', JSON.stringify(bankConfig));
 
         if (syncToCloud && isSupabaseConnected && supabaseClient) {
+          // 1. Productos
           if (products.length > 0) {
-            const dbProds = products.map(p => ({
-              id: p.id,
-              code: p.code || '',
-              internal_code: p.internalCode || p.internal_code || '',
-              name: p.name,
-              category: p.category || '',
-              cost: Number(p.cost) || 0,
-              tax_rate: Number(p.taxRate !== undefined ? p.taxRate : (p.tax_rate || 21)),
-              margin: Number(p.margin) || 0,
-              price: Number(p.price) || 0,
-              stock: Number(p.stock) || 0,
-              unit: p.unit || '',
-              flavor: p.flavor || '',
-              portion: p.portion || '',
-              description: p.description || '',
-              activos: p.activos || [],
-              image: p.image || '',
-              featured: !!p.featured,
-              badge: p.badge || ''
-            }));
-            supabaseClient.from('products').upsert(dbProds).then(({ error }) => {
+            const dbProds = products.map(dbProduct);
+            supabaseClient.from('products').upsert(dbProds, { onConflict: 'id' }).then(({ error }) => {
               if (error) console.warn("Supabase upsert products error:", error.message);
             });
           }
+
+          // 2. Clientes
+          if (clients.length > 0) {
+            const dbClis = clients.map(dbClient);
+            supabaseClient.from('clients').upsert(dbClis, { onConflict: 'cuit' }).then(({ error }) => {
+              if (error) console.warn("Supabase upsert clients error:", error.message);
+            });
+          }
+
+          // 3. Ventas (ultimas 100 ventas activas)
+          if (sales.length > 0) {
+            const dbSals = sales.slice(0, 100).map(dbSale);
+            supabaseClient.from('sales').upsert(dbSals, { onConflict: 'id' }).then(({ error }) => {
+              if (error) console.warn("Supabase upsert sales error:", error.message);
+            });
+          }
+
+          // 4. Colaboradores
           if (colaboradores.length > 0) {
-            supabaseClient.from('collaborators').upsert(colaboradores).then(({ error }) => {
+            const dbCols = colaboradores.map(dbColab);
+            supabaseClient.from('collaborators').upsert(dbCols, { onConflict: 'id' }).then(({ error }) => {
               if (error) console.warn("Supabase upsert colabs error:", error.message);
             });
           }
+
+          // 5. Categorías
+          if (categories.length > 0) {
+            const catRows = categories.map(name => ({ name }));
+            supabaseClient.from('categories').upsert(catRows, { onConflict: 'name' }).then(({ error }) => {
+              if (error) console.warn("Supabase upsert categories error:", error.message);
+            });
+          }
+
+          // 6. Ofertas
+          if (offers.length > 0) {
+            const offRows = offers.map(dbOffer);
+            supabaseClient.from('offers').upsert(offRows, { onConflict: 'product_id' }).then(({ error }) => {
+              if (error) console.warn("Supabase upsert offers error:", error.message);
+            });
+          }
+
+          // 7. Configuración General y Finanzas
+          const cfgRow = dbStoreConfig();
+          supabaseClient.from('store_config').upsert(cfgRow, { onConflict: 'id' }).then(({ error }) => {
+            if (error) console.warn("Supabase upsert store_config error:", error.message);
+          });
         }
       } catch (e) {
-        console.error(e);
+        console.error("Error al guardar storage y sincronizar:", e);
       }
     }
 
@@ -7970,18 +8415,25 @@
       });
 
       const saleRecord = {
-        id: orderId,
+        id: String(orderId),
+        ticketNo: 'WEB-' + orderId,
         date: dateStr + ' ' + timeStr,
         seller: 'Tienda E-Commerce GOMEX',
+        sellerName: 'Tienda E-Commerce GOMEX',
         client: buyerName,
         paymentMethod: 'E-Commerce (WhatsApp Directo)',
+        method: 'E-Commerce (WhatsApp Directo)',
         lines: saleLines,
+        items: saleLines,
+        subtotal: Math.round(total / 1.21),
+        tax: total - Math.round(total / 1.21),
         total: total
       };
 
       sales.unshift(saleRecord);
       ecommerceCart = [];
-      saveStorageData();
+      saveStorageData(true);
+      syncSaleToSupabase(saleRecord);
       renderEcommerceProducts();
       renderStockTable();
       renderDBProducts();
@@ -8198,7 +8650,10 @@
       // 3. Descontar stock y registrar venta
       currentEcomDraft.items.forEach(it => {
         const prod = products.find(p => p.id === it.id);
-        if (prod) prod.stock = Math.max(0, prod.stock - it.qty);
+        if (prod) {
+          prod.stock = Math.max(0, prod.stock - it.qty);
+          syncProductToSupabase(prod);
+        }
       });
 
       const methodStr = currentSelectedPaymentTab === 'mp'
@@ -8206,21 +8661,28 @@
         : 'Transferencia Bancaria (CBU / Alias)';
 
       const saleRecord = {
-        id: orderId,
+        id: String(orderId),
+        ticketNo: 'WEB-' + orderId,
         date: dateStr + ' ' + timeStr,
         seller: 'Tienda E-Commerce GOMEX',
+        sellerName: 'Tienda E-Commerce GOMEX',
         client: currentEcomDraft.buyerName,
         paymentMethod: `E-Commerce (${methodStr})`,
+        method: `E-Commerce (${methodStr})`,
         lines: currentEcomDraft.items,
+        items: currentEcomDraft.items,
+        subtotal: Math.round(currentEcomDraft.total / 1.21),
+        tax: currentEcomDraft.total - Math.round(currentEcomDraft.total / 1.21),
         total: currentEcomDraft.total
       };
 
       sales.unshift(saleRecord);
-      saveStorageData();
+      saveStorageData(true);
+      syncSaleToSupabase(saleRecord);
 
       // 4. Vaciar carrito de compras
       ecommerceCart = [];
-      saveStorageData();
+      saveStorageData(true);
       renderEcommerceProducts();
       renderStockTable();
       renderDBProducts();
@@ -8431,6 +8893,7 @@
 
         if (prod) {
           prod.stock = Math.max(0, prod.stock - item.quantity);
+          syncProductToSupabase(prod);
         }
 
         saleLines.push({
@@ -8442,18 +8905,26 @@
         });
       });
 
+      const saleId = String(customOrderId || ('ECOM-' + (sales.length + 1) + '-' + Date.now().toString().slice(-4)));
       const saleRecord = {
-        id: customOrderId || ('ECOM-' + (sales.length + 1)),
+        id: saleId,
+        ticketNo: String(customOrderId || ('ECOM-' + (sales.length + 1))),
         date: dateStr,
         seller: 'Tienda E-Commerce GOMEX',
+        sellerName: 'Tienda E-Commerce GOMEX',
         client: buyerName,
         paymentMethod: `E-Commerce (${origin})`,
+        method: `E-Commerce (${origin})`,
         lines: saleLines,
+        items: saleLines,
+        subtotal: Math.round(total / 1.21),
+        tax: total - Math.round(total / 1.21),
         total: total
       };
 
       sales.unshift(saleRecord);
-      saveStorageData();
+      saveStorageData(true);
+      syncSaleToSupabase(saleRecord);
       renderEcommerceProducts();
       renderStockTable();
       renderDBProducts();
@@ -8753,8 +9224,10 @@
       storeConfig.email = document.getElementById('cfgEmailInput').value.trim();
       storeConfig.ticketMsg = document.getElementById('cfgTicketMsgInput').value.trim();
 
+      saveStorageData(true);
+      syncStoreConfigToSupabase();
       updateStoreConfigPreview();
-      alert('¡Configuración General guardada correctamente!');
+      alert('¡Configuración General guardada y sincronizada en Supabase correctamente!');
     }
 
 
@@ -8832,7 +9305,7 @@
       const dateStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       expenses.unshift({
-        id: expenses.length + 1,
+        id: Date.now(),
         date: dateStr,
         category,
         concept,
@@ -8852,14 +9325,18 @@
         renderCashMovements();
       }
 
+      saveStorageData(true);
+      syncStoreConfigToSupabase();
       closeAddExpenseModal();
       renderExpensesTable();
-      alert('¡Gasto registrado correctamente!');
+      alert('¡Gasto registrado y sincronizado en Supabase correctamente!');
     }
 
     function deleteExpense(id) {
       if (confirm('¿Está seguro de eliminar este registro de gasto?')) {
         expenses = expenses.filter(e => e.id !== id);
+        saveStorageData(true);
+        syncStoreConfigToSupabase();
         renderExpensesTable();
       }
     }
@@ -9087,27 +9564,32 @@
       }
     }
 
-    function handleSaveOffer(e) {
+    async function handleSaveOffer(e) {
       e.preventDefault();
       const prodId = parseInt(document.getElementById('offerProductSelect').value);
       const discount = parseFloat(document.getElementById('offerDiscountPercent').value);
       const offerPrice = parseFloat(document.getElementById('offerFinalPrice').value);
 
+      const offerObj = { productId: prodId, discount, offerPrice };
       offers = offers.filter(o => o.productId !== prodId);
-      offers.push({ productId: prodId, discount, offerPrice });
+      offers.push(offerObj);
 
       closeAddOfferModal();
-      saveStorageData();
+      saveStorageData(true);
+      syncOfferToSupabase(offerObj);
       renderEcommerceProducts();
       renderDashboard();
       renderPOSProducts();
       renderCatalog();
-      alert('¡Oferta activada correctamente!');
+      alert('¡Oferta activada y sincronizada en Supabase correctamente!');
     }
 
-    function removeOffer(index) {
-      offers.splice(index, 1);
-      saveStorageData();
+    async function removeOffer(index) {
+      const removed = offers.splice(index, 1)[0];
+      saveStorageData(true);
+      if (removed && removed.productId) {
+        deleteOfferFromSupabase(removed.productId);
+      }
       renderEcommerceProducts();
       renderDashboard();
       renderPOSProducts();
@@ -9470,7 +9952,7 @@
       }
     }
 
-    function processSale() {
+    async function processSale() {
       const clientName = document.getElementById('checkoutClientSelect').value;
       const method = document.getElementById('checkoutMethodSelect').value;
       const subtotal = cart.reduce((acc, i) => acc + (i.product.price * i.quantity), 0);
@@ -9487,22 +9969,34 @@
 
       cart.forEach(item => {
         const p = products.find(prod => prod.id === item.product.id);
-        if (p) p.stock = Math.max(0, p.stock - item.quantity);
+        if (p) {
+          p.stock = Math.max(0, p.stock - item.quantity);
+          syncProductToSupabase(p);
+        }
       });
 
       const now = new Date();
       const ticketNo = 'CX-0001-' + String(sales.length + 5100).padStart(8, '0');
       const sellerUsername = currentUser ? (currentUser.username || currentUser.name) : 'admin';
       const sellerDisplayName = currentUser ? currentUser.name : 'Administrador GOMEX';
+      const saleId = 'CX-' + Date.now();
 
       const saleRecord = {
-        id: sales.length + 1,
+        id: saleId,
         ticketNo: ticketNo,
         client: clientName,
         seller: sellerUsername,
         sellerName: sellerDisplayName,
         date: now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         method: method,
+        paymentMethod: method,
+        lines: cart.map(i => ({
+          id: i.product.id,
+          name: i.product.name,
+          qty: i.quantity,
+          price: i.product.price,
+          subtotal: i.product.price * i.quantity
+        })),
         items: [...cart],
         subtotal: subtotal,
         tax: tax,
@@ -9518,7 +10012,8 @@
         amount: total
       });
 
-      saveStorageData();
+      saveStorageData(true);
+      syncSaleToSupabase(saleRecord);
       closeCheckoutModal();
       showTicket(saleRecord);
 
@@ -9699,8 +10194,9 @@
       bankConfig.holder = document.getElementById('cfgHolderInput').value.trim();
       bankConfig.cuit = document.getElementById('cfgBankCuitInput').value.trim();
 
-      saveStorageData();
-      alert('¡Datos de cuentas de cobro y Mercado Pago guardados correctamente!');
+      saveStorageData(true);
+      syncStoreConfigToSupabase();
+      alert('¡Datos de cuentas de cobro y Mercado Pago guardados y sincronizados en Supabase correctamente!');
     }
 
     // GESTIÓN Y RENDERIZADO DE MÓDULO COMPRAS & INGRESO DE STOCK
@@ -10251,40 +10747,58 @@
       document.getElementById('editClientModal').classList.remove('active');
     }
 
-    function handleUpdateClient(e) {
+    async function handleUpdateClient(e) {
       e.preventDefault();
       const idx = parseInt(document.getElementById('editClientModal').dataset.editIndex, 10);
       const client = clients[idx];
       if (!client) return;
 
-      client.name = document.getElementById('editClientName').value.trim();
-      client.gym = document.getElementById('editClientGym').value.trim() || '-';
-      client.location = document.getElementById('editClientLocation').value.trim() || '-';
-      client.province = document.getElementById('editClientProvince').value.trim() || '-';
-      client.cuit = document.getElementById('editClientCuit').value.trim() || '-';
-      client.phone = document.getElementById('editClientPhone').value.trim() || '-';
-      client.email = document.getElementById('editClientEmail').value.trim() || '-';
+      const origCuit = document.getElementById('editClientOriginalCuit')?.value?.trim();
+      const newName = document.getElementById('editClientName').value.trim();
+      const newGym = document.getElementById('editClientGym').value.trim() || '-';
+      const newLocation = document.getElementById('editClientLocation').value.trim() || '-';
+      const newProvince = document.getElementById('editClientProvince').value.trim() || '-';
+      const newCuit = document.getElementById('editClientCuit').value.trim() || client.cuit || `CLI-${Date.now().toString().slice(-6)}`;
+      const newPhone = document.getElementById('editClientPhone').value.trim() || '-';
+      const newEmail = document.getElementById('editClientEmail').value.trim() || '-';
 
-      saveStorageData();
+      if (origCuit && origCuit !== newCuit) {
+        deleteClientFromSupabase(origCuit);
+      }
+
+      client.name = newName;
+      client.gym = newGym;
+      client.location = newLocation;
+      client.province = newProvince;
+      client.cuit = newCuit;
+      client.phone = newPhone;
+      client.email = newEmail;
+
+      saveStorageData(true);
+      syncClientToSupabase(client);
       closeEditClientModal();
       renderDBClients();
       populateClientSelect(client.name);
 
-      alert(`¡Cliente "${client.name}" actualizado correctamente!`);
+      alert(`¡Cliente "${client.name}" actualizado y sincronizado en la base de datos!`);
     }
 
-    function deleteClient(index) {
+    async function deleteClient(index) {
       const client = clients[index];
       if (!client) return;
       if (client.cuit === '00-00000000-0' || client.name === 'Consumidor Final') {
         alert('No se puede eliminar el cliente Consumidor Final.');
         return;
       }
-      if (confirm(`¿Está seguro de eliminar al cliente "${client.name}"?`)) {
-        clients.splice(index, 1);
-        saveStorageData();
+      if (confirm(`¿Está seguro de eliminar al cliente "${client.name}" de la base de datos?`)) {
+        const deleted = clients.splice(index, 1)[0];
+        saveStorageData(true);
+        if (deleted && deleted.cuit) {
+          deleteClientFromSupabase(deleted.cuit);
+        }
         renderDBClients();
         populateClientSelect();
+        alert(`🗑️ Cliente "${client.name}" eliminado de la base de datos.`);
       }
     }
 
@@ -10396,7 +10910,7 @@
       document.getElementById('addColaboradorModal').classList.remove('active');
     }
 
-    function handleSaveColaborador(e) {
+    async function handleSaveColaborador(e) {
       e.preventDefault();
       const name = document.getElementById('newColabName').value.trim();
       const username = document.getElementById('newColabUsername').value.trim();
@@ -10433,9 +10947,10 @@
       colaboradores.push(newColab);
 
       saveStorageData(true);
+      syncColabToSupabase(newColab);
       closeAddColaboradorModal();
       renderDBColaboradores();
-      alert(`✅ ¡Colaborador "${name}" registrado correctamente con sus permisos anclados!`);
+      alert(`✅ ¡Colaborador "${name}" registrado correctamente en la base de datos!`);
     }
 
     function openEditColaboradorModal(id) {
@@ -10467,7 +10982,7 @@
       document.getElementById('editColaboradorModal').classList.remove('active');
     }
 
-    function handleUpdateColaborador(e) {
+    async function handleUpdateColaborador(e) {
       e.preventDefault();
       const id = parseInt(document.getElementById('editColabId').value);
       const col = colaboradores.find(c => c.id === id);
@@ -10505,9 +11020,10 @@
       }
 
       saveStorageData(true);
+      syncColabToSupabase(col);
       closeEditColaboradorModal();
       renderDBColaboradores();
-      alert(`✅ ¡Colaborador "${col.name}" y sus permisos fueron actualizados correctamente!`);
+      alert(`✅ ¡Colaborador "${col.name}" y sus permisos fueron actualizados en la base de datos!`);
     }
 
     async function deleteColaborador(id) {
@@ -10522,16 +11038,9 @@
       if (confirm(`¿Estás seguro de eliminar a ${col.name} (@${col.username})? Se eliminará de la base de datos.`)) {
         colaboradores = colaboradores.filter(c => c.id !== id);
         saveStorageData(true);
-        if (isSupabaseConnected && supabaseClient) {
-          try {
-            await supabaseClient.from('collaborators').delete().eq('id', id);
-            console.log(`⚡ Colaborador ID ${id} eliminado de Supabase.`);
-          } catch (e) {
-            console.warn("Supabase delete colab:", e);
-          }
-        }
+        deleteColabFromSupabase(id);
         renderDBColaboradores();
-        alert('🗑️ Colaborador eliminado exitosamente.');
+        alert('🗑️ Colaborador eliminado exitosamente de la base de datos.');
       }
     }
 
@@ -10628,16 +11137,11 @@
         return;
       }
 
-      sales.splice(idx, 1);
-      saveStorageData();
+      const deletedSale = sales.splice(idx, 1)[0];
+      saveStorageData(true);
 
-      if (typeof supabaseClient !== 'undefined' && supabaseClient && sale.id) {
-        try {
-          await supabaseClient.from('sales').delete().eq('id', sale.id);
-          console.log(`⚡ Venta ${sale.id} eliminada de Supabase.`);
-        } catch (e) {
-          console.warn("Supabase delete sale:", e);
-        }
+      if (deletedSale && deletedSale.id) {
+        deleteSaleFromSupabase(deletedSale.id);
       }
 
       renderSalesTable();
@@ -10671,7 +11175,7 @@
       document.getElementById('editSaleModal').classList.remove('active');
     }
 
-    function handleUpdateSale(e) {
+    async function handleUpdateSale(e) {
       e.preventDefault();
       const idx = parseInt(document.getElementById('editSaleIndex').value, 10);
       const sale = sales[idx];
@@ -10693,12 +11197,13 @@
       sale.subtotal = Math.round(newTotal / 1.21);
       sale.tax = newTotal - sale.subtotal;
 
-      saveStorageData();
+      saveStorageData(true);
+      syncSaleToSupabase(sale);
       closeEditSaleModal();
       renderSalesTable();
       renderDashboard();
 
-      alert(`✅ ¡Comprobante "${sale.ticketNo || 'CX-0001'}" modificado correctamente!`);
+      alert(`✅ ¡Comprobante "${sale.ticketNo || 'CX-0001'}" modificado y sincronizado correctamente!`);
     }
 
     function exportSalesToPDF() {
@@ -10891,7 +11396,8 @@
         status: 'Vigente'
       });
 
-      saveStorageData();
+      saveStorageData(true);
+      syncStoreConfigToSupabase();
       renderBudgetsTable();
       alert(`¡Presupuesto ${budgetNo} emitido para ${clientName}!`);
     }
@@ -10900,7 +11406,8 @@
       const b = budgets[idx];
       if (!b) return;
       b.status = 'Convertido';
-      saveStorageData();
+      saveStorageData(true);
+      syncStoreConfigToSupabase();
       renderBudgetsTable();
       showModule('mod-pos');
       alert(`Presupuesto ${b.number} listo para facturar.`);
@@ -11059,6 +11566,7 @@
         cat = customCat;
         if (!categories.includes(cat)) {
           categories.push(cat);
+          syncCategoryToSupabase(cat);
         }
       }
 
@@ -11117,6 +11625,7 @@
 
       closeAddProductModal();
       saveStorageData(true);
+      syncProductToSupabase(newProduct);
       renderCategoriesUI();
       renderEcommerceCategories();
       renderEcommerceProducts();
@@ -11401,14 +11910,16 @@
 
       function processBatch() {
         const end = Math.min(currentIndex + chunkSize, totalRows);
+        let maxId = products.reduce((max, p) => Math.max(max, p.id || 0), 0);
 
         for (let i = currentIndex; i < end; i++) {
           const newP = parsedImportProducts[i];
           if (newP.category && !categories.includes(newP.category)) {
             categories.push(newP.category);
           }
+          maxId++;
           products.push({
-            id: products.length + 1,
+            id: maxId,
             ...newP
           });
           importRecord.processedRows++;
@@ -11431,8 +11942,8 @@
           renderImportHistory();
 
           setTimeout(() => {
-            saveStorageData();
-            alert(`¡Importación finalizada! Se agregaron ${importRecord.okRows} productos con éxito.`);
+            saveStorageData(true);
+            alert(`¡Importación finalizada! Se agregaron ${importRecord.okRows} productos con éxito y se sincronizaron en Supabase.`);
             closeImportExcelModal();
             renderCategoriesUI();
             renderEcommerceCategories();
@@ -11465,7 +11976,7 @@
       clientModalSource = 'default';
     }
 
-    function handleSaveClient(e) {
+    async function handleSaveClient(e) {
       e.preventDefault();
       const name = document.getElementById('newClientName').value.trim();
       const gym = document.getElementById('newClientGym').value.trim() || '-';
@@ -11476,8 +11987,16 @@
       const email = document.getElementById('newClientEmail').value.trim() || '-';
 
       const newClient = { cuit, name, gym, location, province, phone, email };
-      clients.push(newClient);
-      saveStorageData();
+
+      const existingIdx = clients.findIndex(c => c.cuit === cuit);
+      if (existingIdx >= 0) {
+        clients[existingIdx] = newClient;
+      } else {
+        clients.push(newClient);
+      }
+
+      saveStorageData(true);
+      syncClientToSupabase(newClient);
       closeAddClientModal();
       renderDBClients();
       populateClientSelect(name);
@@ -11487,7 +12006,7 @@
         if (sel) sel.value = name;
         alert(`¡Cliente "${name}" registrado y seleccionado para esta venta!`);
       } else {
-        alert(`¡Cliente "${name}" guardado exitosamente!`);
+        alert(`¡Cliente "${name}" guardado exitosamente en la base de datos!`);
       }
     }
 
