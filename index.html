@@ -3645,6 +3645,80 @@
       margin: 12px 0;
     }
 
+    /* BOTÓN CUADRADO DE ELIMINAR */
+    .btn-delete-sale {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      min-width: 34px;
+      min-height: 34px;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid #ef4444;
+      color: #ef4444;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 1.15rem;
+      padding: 0;
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.15);
+    }
+    .btn-delete-sale:hover {
+      background: #ef4444;
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+    .btn-delete-sale:active {
+      transform: scale(0.92);
+    }
+
+    /* ESTILOS DE IMPRESIÓN LIMPIA */
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      #ticketModal,
+      #ticketModal .modal-box,
+      #ticketContent,
+      #ticketContent * {
+        visibility: visible !important;
+      }
+      #ticketModal {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+      }
+      #ticketModal .modal-box {
+        max-width: 100% !important;
+        width: 80mm !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: transparent !important;
+      }
+      #ticketModal .modal-header,
+      #ticketModal .modal-close,
+      .no-print,
+      .ticket-actions {
+        display: none !important;
+      }
+      .ticket-view {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 4px !important;
+        margin: 0 !important;
+      }
+    }
+
     .pagination-bar {
       display: flex;
       justify-content: center;
@@ -3814,6 +3888,24 @@
         padding: 18px 14px;
         max-width: 95vw;
         margin: 10px;
+      }
+
+      .btn-delete-sale {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        min-height: 38px;
+        font-size: 1.25rem;
+      }
+
+      #salesSearchInput {
+        max-width: 100% !important;
+        width: 100% !important;
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: 10px 8px;
       }
     }
 
@@ -4559,7 +4651,7 @@
         <div class="menu-category">Módulos Principales</div>
 
         <!-- DASHBOARD / INICIO -->
-        <li class="nav-item">
+        <li class="nav-item" data-perm="dashboard">
           <div class="nav-link active" onclick="showModule('mod-dashboard', this)">
             <div class="link-content">
               <ion-icon name="speedometer-outline"></ion-icon>
@@ -4569,7 +4661,7 @@
         </li>
 
         <!-- CATÁLOGO DIGITAL -->
-        <li class="nav-item">
+        <li class="nav-item" data-perm="catalogo">
           <div class="nav-link" onclick="showModule('mod-catalogo', this)">
             <div class="link-content">
               <ion-icon name="grid-outline"></ion-icon>
@@ -4579,7 +4671,7 @@
         </li>
 
         <!-- FACTURACIÓN / VENTAS -->
-        <li class="nav-item open">
+        <li class="nav-item open" data-nav-group="facturacion">
           <div class="nav-link" onclick="toggleSubmenu(this)">
             <div class="link-content">
               <ion-icon name="receipt-outline"></ion-icon>
@@ -4588,16 +4680,16 @@
             <ion-icon name="chevron-forward-outline" class="arrow"></ion-icon>
           </div>
           <div class="submenu">
-            <a id="menu-pos" class="nav-link" onclick="showModule('mod-pos', this)">Punto POS</a>
-            <a class="nav-link" onclick="showModule('mod-ventas', this)">Historial Ventas</a>
-            <a class="nav-link" onclick="showModule('mod-presupuesto', this)">Presupuestos</a>
+            <a id="menu-pos" class="nav-link" data-perm="pos" onclick="showModule('mod-pos', this)">Punto POS</a>
+            <a class="nav-link" data-perm="ventas" onclick="showModule('mod-ventas', this)">Historial Ventas</a>
+            <a class="nav-link" data-perm="presupuesto" onclick="showModule('mod-presupuesto', this)">Presupuestos</a>
           </div>
         </li>
 
         <div class="menu-category">Gestión & Personal</div>
 
         <!-- COLABORADORES & ROLES -->
-        <li class="nav-item">
+        <li class="nav-item" data-perm="colaboradores">
           <div class="nav-link" onclick="showModule('mod-colaboradores', this)">
             <div class="link-content">
               <ion-icon name="people-circle-outline"></ion-icon>
@@ -4607,11 +4699,11 @@
         </li>
 
         <!-- CLIENTES -->
-        <li class="nav-item">
+        <li class="nav-item" data-perm="clientes">
           <div class="nav-link" onclick="showModule('mod-clientes', this)">
             <div class="link-content">
               <ion-icon name="people-outline"></ion-icon>
-              <span>Padrón de Clientes</span>
+              <span>Clientes</span>
             </div>
           </div>
         </li>
@@ -4619,7 +4711,7 @@
         <div class="menu-category">Herramientas & Ajustes</div>
 
         <!-- CONFIGURACIÓN -->
-        <li class="nav-item">
+        <li class="nav-item" data-perm="config" data-nav-group="config">
           <div class="nav-link" onclick="toggleSubmenu(this)">
             <div class="link-content">
               <ion-icon name="settings-outline"></ion-icon>
@@ -4628,11 +4720,11 @@
             <ion-icon name="chevron-forward-outline" class="arrow"></ion-icon>
           </div>
           <div class="submenu">
-            <a class="nav-link" onclick="showModule('mod-cfg-general', this)">General</a>
-            <a class="nav-link" onclick="showModule('mod-cfg-tesoreria', this)">Cuentas de Cobro</a>
-            <a class="nav-link" onclick="showModule('mod-cfg-parametros', this)">Parámetros</a>
-            <a class="nav-link" onclick="showModule('mod-cfg-productos', this)">Productos</a>
-            <a class="nav-link" onclick="showModule('mod-cfg-ventas', this)">Ventas</a>
+            <a class="nav-link" data-perm="config" onclick="showModule('mod-cfg-general', this)">General</a>
+            <a class="nav-link" data-perm="config" onclick="showModule('mod-cfg-tesoreria', this)">Cuentas de Cobro</a>
+            <a class="nav-link" data-perm="config" onclick="showModule('mod-cfg-parametros', this)">Parámetros</a>
+            <a class="nav-link" data-perm="config" onclick="showModule('mod-cfg-productos', this)">Productos</a>
+            <a class="nav-link" data-perm="config" onclick="showModule('mod-cfg-ventas', this)">Ventas</a>
           </div>
         </li>
 
@@ -4745,7 +4837,7 @@
                 </div>
                 <div class="dash-quick-btn" onclick="showModule('mod-clientes', document.querySelector('.nav-link[onclick*=\'mod-clientes\']'))">
                   <ion-icon name="people-outline"></ion-icon>
-                  <span>Padrón Clientes</span>
+                  <span>Clientes</span>
                 </div>
                 <div class="dash-quick-btn" onclick="showModule('mod-catalogo', document.querySelector('.nav-link[onclick*=\'mod-catalogo\']'))">
                   <ion-icon name="grid-outline"></ion-icon>
@@ -4874,8 +4966,18 @@
 
         <!-- MÓDULO: VENTAS -->
         <section id="mod-ventas" class="module-section">
-          <h2 class="page-title"><ion-icon name="trending-up-outline"></ion-icon> Historial de Ventas</h2>
-          <div class="grid-cards">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+            <div>
+              <h2 class="page-title" style="margin-bottom: 4px;"><ion-icon name="trending-up-outline"></ion-icon> Historial de Ventas</h2>
+              <p style="color: var(--text-muted); font-size: 0.88rem;">Registro de comprobantes emitidos, colaboradores y medios de pago.</p>
+            </div>
+            <button type="button" class="btn btn-outline" style="border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.08); font-weight: 700; display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 12px;" onclick="exportSalesToPDF()">
+              <ion-icon name="document-text-outline" style="font-size: 1.2rem;"></ion-icon>
+              <span>Exportar PDF</span>
+            </button>
+          </div>
+
+          <div class="grid-cards" style="margin-bottom: 20px;">
             <div class="card">
               <div class="card-title">Ventas Hoy</div>
               <div class="card-value" id="salesTotalToday">$0</div>
@@ -4886,12 +4988,17 @@
             </div>
           </div>
 
+          <div style="margin-bottom: 15px;">
+            <input type="text" id="salesSearchInput" class="checker-input" placeholder="" oninput="renderSalesTable()" style="max-width: 380px; margin: 0; background: rgba(15, 29, 50, 0.6); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; color: #ffffff; padding: 10px 16px;">
+          </div>
+
           <div class="data-table-container">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>N° Factura</th>
+                  <th>N° Comprobante</th>
                   <th>Cliente</th>
+                  <th>Emisor / Colaborador</th>
                   <th>Fecha / Hora</th>
                   <th>Método</th>
                   <th>Total</th>
@@ -5141,17 +5248,27 @@
           </div>
         </section>
 
-        <!-- MÓDULO: BASE DE DATOS - CLIENTES -->
+        <!-- MÓDULO: CLIENTES -->
         <section id="mod-clientes" class="module-section">
-          <h2 class="page-title"><ion-icon name="people-outline"></ion-icon> BD - Clientes</h2>
-          <button class="btn btn-green" style="margin-bottom: 15px;" onclick="openAddClientModal()">+ Registrar
-            Cliente</button>
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+            <div>
+              <h2 class="page-title" style="margin-bottom: 4px;"><ion-icon name="people-outline"></ion-icon> Clientes</h2>
+              <p style="color: var(--text-muted); font-size: 0.88rem;">Administrá la cartera de clientes, gimnasios asociados y provincias de entrega.</p>
+            </div>
+            <button class="btn btn-green" onclick="openAddClientModal()" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: 12px; font-weight: 800;">
+              <ion-icon name="person-add-outline" style="font-size: 1.2rem;"></ion-icon>
+              <span>+ Registrar Cliente</span>
+            </button>
+          </div>
           <div class="data-table-container">
             <table class="data-table">
               <thead>
                 <tr>
+                  <th>Nombre / Cliente</th>
+                  <th>Gimnasio / Box</th>
+                  <th>Ubicación</th>
+                  <th>Provincia</th>
                   <th>CUIT / DNI</th>
-                  <th>Nombre / Razón Social</th>
                   <th>Teléfono</th>
                   <th>Email</th>
                   <th>Acciones</th>
@@ -5636,8 +5753,14 @@
       </div>
 
       <div class="form-group">
-        <label>Cliente</label>
-        <select id="checkoutClientSelect" class="input-field">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <label style="margin-bottom: 0; font-weight: 700;">CLIENTE</label>
+          <button type="button" class="btn btn-outline" style="padding: 4px 10px; font-size: 0.78rem; border-color: var(--celeste-brand); color: var(--celeste-brand); border-radius: 8px; display: inline-flex; align-items: center; gap: 4px;" onclick="openAddClientModal('checkout')">
+            <ion-icon name="person-add-outline"></ion-icon>
+            <span>+ Nuevo Cliente</span>
+          </button>
+        </div>
+        <select id="checkoutClientSelect" class="input-field" onchange="handleCheckoutClientSelectChange(this)">
           <!-- Dynamic clients -->
         </select>
       </div>
@@ -5687,9 +5810,12 @@
         <!-- Rendered dynamically -->
       </div>
 
-      <div style="display: flex; gap: 10px; margin-top: 15px;">
-        <button class="btn btn-outline" style="flex:1;" onclick="closeTicketModal()">Cerrar</button>
-        <button class="btn btn-green" style="flex:1;" onclick="window.print()">Imprimir Ticket</button>
+      <div class="ticket-actions no-print" style="display: flex; gap: 12px; margin-top: 15px;">
+        <button type="button" class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="closeTicketModal()">Cerrar</button>
+        <button type="button" class="btn btn-green" style="flex: 2; justify-content: center; font-weight: 800; display: inline-flex; align-items: center; gap: 8px;" onclick="printTicket()">
+          <ion-icon name="print-outline" style="font-size: 1.2rem;"></ion-icon>
+          <span>Imprimir / Guardar como PDF</span>
+        </button>
       </div>
     </div>
   </div>
@@ -6121,62 +6247,178 @@
   </div>
 
   <!-- Modal Nuevo Cliente -->
-  <div class="modal-overlay" id="addClientModal">
-    <div class="modal-box">
+  <div class="modal-overlay" id="addClientModal" style="z-index: 10005;">
+    <div class="modal-box" style="max-width: 580px; max-height: 90vh; overflow-y: auto;">
       <div class="modal-header">
-        <h3><ion-icon name="person-add-outline"></ion-icon> Registrar Cliente</h3>
+        <h3 style="color: var(--celeste-brand); display: flex; align-items: center; gap: 8px;">
+          <ion-icon name="person-add-outline"></ion-icon>
+          <span>Registrar Nuevo Cliente</span>
+        </h3>
         <span class="modal-close" onclick="closeAddClientModal()">&times;</span>
       </div>
       <form onsubmit="handleSaveClient(event)">
         <div class="form-group">
-          <label>CUIT / DNI</label>
-          <input type="text" id="newClientCuit" class="input-field" required placeholder="Ej: 20-38492019-7">
+          <label>Nombre Completo / Razón Social *</label>
+          <input type="text" id="newClientName" class="input-field" required placeholder="Ej: Lucas Martínez">
         </div>
-        <div class="form-group">
-          <label>Nombre / Razón Social</label>
-          <input type="text" id="newClientName" class="input-field" required placeholder="Ej: María Rossi">
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Gimnasio / Box / Pertenencia</label>
+            <input type="text" id="newClientGym" class="input-field" placeholder="Ej: Megatlon / Crossfit Box / Independiente">
+          </div>
+          <div class="form-group">
+            <label>Ubicación / Dirección</label>
+            <input type="text" id="newClientLocation" class="input-field" placeholder="Ej: Av. Santa Fe 1234">
+          </div>
         </div>
-        <div class="form-group">
-          <label>Teléfono</label>
-          <input type="text" id="newClientPhone" class="input-field" placeholder="Ej: 11-4920-1928">
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Provincia *</label>
+            <input type="text" id="newClientProvince" class="input-field" required placeholder="Ej: Buenos Aires, Córdoba, Santa Fe...">
+          </div>
+          <div class="form-group">
+            <label>CUIT / DNI (Opcional)</label>
+            <input type="text" id="newClientCuit" class="input-field" placeholder="Ej: 20-38492019-7">
+          </div>
         </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="newClientEmail" class="input-field" placeholder="Ej: maria@gmail.com">
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Teléfono / WhatsApp</label>
+            <input type="text" id="newClientPhone" class="input-field" placeholder="Ej: 11-4920-1928">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="newClientEmail" class="input-field" placeholder="Ej: cliente@gmail.com">
+          </div>
         </div>
-        <button type="submit" class="btn btn-green" style="width: 100%; justify-content: center;">Guardar
-          Cliente</button>
+
+        <button type="submit" class="btn btn-green" style="width: 100%; justify-content: center; padding: 12px; font-weight: 800; margin-top: 10px;">
+          <ion-icon name="checkmark-circle-outline" style="font-size: 1.2rem;"></ion-icon>
+          <span>Guardar Cliente</span>
+        </button>
       </form>
     </div>
   </div>
 
   <!-- Modal Editar Cliente -->
-  <div class="modal-overlay" id="editClientModal">
-    <div class="modal-box">
+  <div class="modal-overlay" id="editClientModal" style="z-index: 10005;">
+    <div class="modal-box" style="max-width: 580px; max-height: 90vh; overflow-y: auto;">
       <div class="modal-header">
-        <h3><ion-icon name="create-outline"></ion-icon> Modificar Cliente</h3>
+        <h3 style="color: var(--verde-italia); display: flex; align-items: center; gap: 8px;">
+          <ion-icon name="create-outline"></ion-icon>
+          <span>Modificar Cliente</span>
+        </h3>
         <span class="modal-close" onclick="closeEditClientModal()">&times;</span>
       </div>
       <form onsubmit="handleUpdateClient(event)">
         <input type="hidden" id="editClientOriginalCuit">
+        <input type="hidden" id="editClientOriginalName">
+
         <div class="form-group">
-          <label>CUIT / DNI</label>
-          <input type="text" id="editClientCuit" class="input-field" required>
-        </div>
-        <div class="form-group">
-          <label>Nombre / Razón Social</label>
+          <label>Nombre Completo / Razón Social *</label>
           <input type="text" id="editClientName" class="input-field" required>
         </div>
-        <div class="form-group">
-          <label>Teléfono</label>
-          <input type="text" id="editClientPhone" class="input-field">
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Gimnasio / Box / Pertenencia</label>
+            <input type="text" id="editClientGym" class="input-field" placeholder="Ej: Megatlon / Crossfit Box">
+          </div>
+          <div class="form-group">
+            <label>Ubicación / Dirección</label>
+            <input type="text" id="editClientLocation" class="input-field" placeholder="Ej: Av. Santa Fe 1234">
+          </div>
         </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="editClientEmail" class="input-field">
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Provincia *</label>
+            <input type="text" id="editClientProvince" class="input-field" required placeholder="Ej: Buenos Aires, Córdoba...">
+          </div>
+          <div class="form-group">
+            <label>CUIT / DNI</label>
+            <input type="text" id="editClientCuit" class="input-field">
+          </div>
         </div>
-        <button type="submit" class="btn btn-green" style="width: 100%; justify-content: center;">Guardar Cambios del
-          Cliente</button>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Teléfono / WhatsApp</label>
+            <input type="text" id="editClientPhone" class="input-field">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="editClientEmail" class="input-field">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-green" style="width: 100%; justify-content: center; padding: 12px; font-weight: 800; margin-top: 10px;">
+          <ion-icon name="checkmark-circle-outline" style="font-size: 1.2rem;"></ion-icon>
+          <span>Guardar Cambios del Cliente</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Editar Venta -->
+  <div class="modal-overlay" id="editSaleModal" style="z-index: 10005;">
+    <div class="modal-box" style="max-width: 580px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h3 style="color: var(--celeste-brand); display: flex; align-items: center; gap: 8px;">
+          <ion-icon name="create-outline"></ion-icon>
+          <span>Modificar Comprobante de Venta</span>
+        </h3>
+        <span class="modal-close" onclick="closeEditSaleModal()">&times;</span>
+      </div>
+      <form onsubmit="handleUpdateSale(event)">
+        <input type="hidden" id="editSaleIndex">
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>N° Comprobante</label>
+            <input type="text" id="editSaleInvoiceNo" class="input-field" readonly style="background: rgba(255,255,255,0.05); font-family: monospace; font-weight: 700;">
+          </div>
+          <div class="form-group">
+            <label>Fecha / Hora *</label>
+            <input type="text" id="editSaleDate" class="input-field" required placeholder="Ej: 18/8/2026 22:30">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Cliente *</label>
+          <input type="text" id="editSaleClient" class="input-field" required placeholder="Nombre del cliente">
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Emisor / Colaborador *</label>
+            <input type="text" id="editSaleSeller" class="input-field" required placeholder="Ej: admin / David Ramírez">
+          </div>
+          <div class="form-group">
+            <label>Método de Pago *</label>
+            <select id="editSaleMethod" class="input-field">
+              <option value="Efectivo">Efectivo</option>
+              <option value="Tarjeta Débito">Tarjeta Débito</option>
+              <option value="Tarjeta Crédito">Tarjeta Crédito</option>
+              <option value="Mercado Pago / Transferencia">Mercado Pago / Transferencia</option>
+              <option value="Cuenta Corriente">Cuenta Corriente</option>
+              <option value="E-Commerce (WhatsApp Directo)">E-Commerce (WhatsApp Directo)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Total de la Venta ($) *</label>
+          <input type="number" id="editSaleTotal" class="input-field" step="0.01" required>
+        </div>
+
+        <button type="submit" class="btn btn-green" style="width: 100%; justify-content: center; padding: 12px; font-weight: 800; margin-top: 10px;">
+          <ion-icon name="checkmark-circle-outline" style="font-size: 1.2rem;"></ion-icon>
+          <span>Guardar Cambios de la Venta</span>
+        </button>
       </form>
     </div>
   </div>
@@ -6600,6 +6842,13 @@
   <script>
     let currentUser = null;
 
+    function isSuperOrAdmin() {
+      if (!currentUser) return true;
+      const u = (currentUser.username || '').toLowerCase();
+      const r = (currentUser.role || '').toLowerCase();
+      return u === 'superadmin' || u === 'admin' || r.includes('super') || r.includes('admin') || r.includes('dueño') || r.includes('socio');
+    }
+
     // Muestra Oficial GOMEX (opcional para pruebas o restaurar)
     const officialSampleProducts = [
       {
@@ -6743,8 +6992,18 @@
     let colaboradores = [...defaultColaboradores];
 
     let clients = [
-      { cuit: '00-00000000-0', name: 'Consumidor Final', phone: '-', email: '-' }
+      {
+        cuit: '00-00000000-0',
+        name: 'Consumidor Final',
+        gym: 'GOMEX Headquarter',
+        location: 'Venta Mostrador',
+        province: 'Buenos Aires',
+        phone: '-',
+        email: '-'
+      }
     ];
+
+    let clientModalSource = 'default';
 
     let boxSession = {
       status: 'CERRADA',
@@ -7099,7 +7358,20 @@
         categories = storedCategories ? JSON.parse(storedCategories) : [...defaultGomexCategories];
 
         const storedSales = localStorage.getItem('gomex_sales');
-        if (storedSales) sales = JSON.parse(storedSales);
+        if (storedSales) {
+          try {
+            const parsedSales = JSON.parse(storedSales);
+            if (Array.isArray(parsedSales)) {
+              sales = parsedSales.map(s => ({
+                ...s,
+                seller: s.seller || 'admin',
+                sellerName: s.sellerName || (s.seller === 'admin' ? 'David Ramírez (SuperAdmin)' : (s.seller || 'Administrador GOMEX'))
+              }));
+            }
+          } catch (e) {
+            sales = [];
+          }
+        }
 
         const storedCounter = localStorage.getItem('gomex_ecom_order_counter');
         if (storedCounter !== null) {
@@ -7107,7 +7379,24 @@
         }
 
         const storedClients = localStorage.getItem('gomex_clients');
-        if (storedClients) clients = JSON.parse(storedClients);
+        if (storedClients) {
+          try {
+            const parsedClients = JSON.parse(storedClients);
+            if (Array.isArray(parsedClients) && parsedClients.length > 0) {
+              clients = parsedClients.map(c => ({
+                cuit: c.cuit || '00-00000000-0',
+                name: c.name || 'Consumidor Final',
+                gym: c.gym || '-',
+                location: c.location || '-',
+                province: c.province || '-',
+                phone: c.phone || '-',
+                email: c.email || '-'
+              }));
+            }
+          } catch(err) {
+            console.warn('Error al parsear clientes:', err);
+          }
+        }
 
         const storedColabs = localStorage.getItem('gomex_colabs');
         if (storedColabs) {
@@ -8235,32 +8524,10 @@
     }
 
     function applyUserPermissions(user) {
-      if (!user) return;
-      const isSuper = user.username.toLowerCase() === 'superadmin' || user.role === 'Super Administrador';
-      const perms = user.permissions || {};
-
-      const has = (key) => isSuper || perms[key] === true;
-
-      const checkAndToggle = (selector, allowed) => {
-        document.querySelectorAll(selector).forEach(el => {
-          const li = el.closest('li') || el;
-          li.style.display = allowed ? '' : 'none';
-        });
-      };
-
-      checkAndToggle('#menu-pos, [onclick*="mod-pos"]', has('pos'));
-      checkAndToggle('[onclick*="mod-ventas"]', has('ventas'));
-      checkAndToggle('[onclick*="mod-presupuesto"]', has('presupuesto'));
-      checkAndToggle('[onclick*="mod-productos"]', has('catalogo'));
-      checkAndToggle('[onclick*="mod-clientes"]', has('clientes'));
-      checkAndToggle('[onclick*="mod-colaboradores"]', has('colaboradores'));
-      checkAndToggle('[onclick*="mod-importaciones"]', has('importaciones'));
-      checkAndToggle('[onclick*="mod-catalogo"]', has('catalogo'));
-
-      const configLi = document.querySelector('[onclick*="mod-cfg-general"]')?.closest('li');
-      if (configLi) {
-        configLi.style.display = has('config') ? '' : 'none';
-      }
+      // Mantiene visible la estructura del menú para que el colaborador conozca los módulos y reciba la notificación de permisos si no tiene acceso
+      document.querySelectorAll('li.nav-item, .submenu a, .menu-category, .dash-quick-btn').forEach(el => {
+        el.style.display = '';
+      });
     }
 
     function handleLogin(event) {
@@ -8321,6 +8588,9 @@
 
     function handleLogout() {
       currentUser = null;
+      document.querySelectorAll('li.nav-item, .submenu a, .menu-category, .dash-quick-btn').forEach(el => {
+        el.style.display = '';
+      });
       switchView('ecommerce');
       document.getElementById('username').value = '';
       document.getElementById('password').value = '';
@@ -8592,14 +8862,27 @@
     }
 
     function renderDashboardMetrics() {
-      const totalSalesSum = sales.reduce((acc, s) => acc + s.total, 0);
-      const salesCount = sales.length;
+      const isPrivileged = isSuperOrAdmin();
+      const currentUsername = currentUser ? (currentUser.username || '').toLowerCase() : 'admin';
+      const currentName = currentUser ? (currentUser.name || '').toLowerCase() : 'administrador gomex';
+
+      let visibleSales = sales;
+      if (!isPrivileged) {
+        visibleSales = sales.filter(s => {
+          const sUser = (s.seller || '').toLowerCase();
+          const sName = (s.sellerName || '').toLowerCase();
+          return sUser === currentUsername || sName === currentName || sUser === currentName;
+        });
+      }
+
+      const totalSalesSum = visibleSales.reduce((acc, s) => acc + (Number(s.total) || 0), 0);
+      const salesCount = visibleSales.length;
       
       const salesValElem = document.getElementById('dashMonthlySales');
       if (salesValElem) salesValElem.textContent = `$${totalSalesSum.toLocaleString('es-AR')}`;
 
       const salesBadge = document.getElementById('dashSalesCountBadge');
-      if (salesBadge) salesBadge.textContent = `${salesCount} ${salesCount === 1 ? 'operación' : 'operaciones'} en total`;
+      if (salesBadge) salesBadge.textContent = `${salesCount} ${salesCount === 1 ? 'operación' : 'operaciones'}${!isPrivileged ? ' (Tus Ventas)' : ' en total'}`;
 
       const prodCountElem = document.getElementById('dashProductCount');
       if (prodCountElem) prodCountElem.textContent = products.length;
@@ -8844,6 +9127,7 @@
       renderImportHistory();
       renderPurchasesTable();
       populateClientSelect();
+      if (currentUser) applyUserPermissions(currentUser);
     }
 
     function renderCategoriesUI() {
@@ -9105,15 +9389,39 @@
       document.getElementById('checkoutModal').classList.remove('active');
     }
 
-    function populateClientSelect() {
+    function populateClientSelect(selectedName = null) {
       const sel = document.getElementById('checkoutClientSelect');
+      if (!sel) return;
       sel.innerHTML = '';
+
       clients.forEach(c => {
         const opt = document.createElement('option');
         opt.value = c.name;
-        opt.textContent = `${c.name} (${c.cuit})`;
+        const details = [];
+        if (c.gym && c.gym !== '-') details.push(c.gym);
+        if (c.province && c.province !== '-') details.push(c.province);
+        else if (c.cuit && c.cuit !== '-') details.push(c.cuit);
+        const detailStr = details.length ? ` (${details.join(' • ')})` : '';
+        opt.textContent = `${c.name}${detailStr}`;
+        if (selectedName && c.name === selectedName) {
+          opt.selected = true;
+        }
         sel.appendChild(opt);
       });
+
+      const newOpt = document.createElement('option');
+      newOpt.value = '__NEW_CLIENT__';
+      newOpt.textContent = '➕ Registrar Nuevo Cliente...';
+      newOpt.style.fontWeight = 'bold';
+      newOpt.style.color = 'var(--celeste-brand)';
+      sel.appendChild(newOpt);
+    }
+
+    function handleCheckoutClientSelectChange(selectElem) {
+      if (selectElem.value === '__NEW_CLIENT__') {
+        openAddClientModal('checkout');
+        selectElem.value = clients[0]?.name || 'Consumidor Final';
+      }
     }
 
     function toggleCashInput() {
@@ -9158,11 +9466,16 @@
       });
 
       const now = new Date();
-      const ticketNo = 'FC-0001-' + String(sales.length + 5100).padStart(8, '0');
+      const ticketNo = 'CX-0001-' + String(sales.length + 5100).padStart(8, '0');
+      const sellerUsername = currentUser ? (currentUser.username || currentUser.name) : 'admin';
+      const sellerDisplayName = currentUser ? currentUser.name : 'Administrador GOMEX';
+
       const saleRecord = {
         id: sales.length + 1,
         ticketNo: ticketNo,
         client: clientName,
+        seller: sellerUsername,
+        sellerName: sellerDisplayName,
         date: now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         method: method,
         items: [...cart],
@@ -9187,11 +9500,12 @@
       cart = [];
       renderCart();
       renderPOSProducts();
-      renderStockTable();
       renderSalesTable();
       renderCashMovements();
       renderDashboard();
     }
+
+    let currentTicketSale = null;
 
     function showTicket(saleParam) {
       let sale = saleParam;
@@ -9202,6 +9516,8 @@
         alert('No se encontró el comprobante seleccionado.');
         return;
       }
+
+      currentTicketSale = sale;
 
       const ticketContent = document.getElementById('ticketContent');
       if (!ticketContent) return;
@@ -9233,11 +9549,20 @@
       const totalVal = Number(sale.total) || 0;
       const subtotalVal = sale.subtotal !== undefined ? Number(sale.subtotal) : Math.round(totalVal / 1.21);
       const taxVal = sale.tax !== undefined ? Number(sale.tax) : (totalVal - subtotalVal);
-      const invoiceNo = sale.ticketNo || sale.id || 'FC-0001-00005100';
-      const sellerName = currentUser ? currentUser.name : (sale.seller || 'David Ramírez (SuperAdmin)');
+      const invoiceNo = sale.ticketNo || (typeof sale.id === 'string' && sale.id.startsWith('CX-') ? sale.id : `CX-0001-${String(sale.id || 5100).padStart(8, '0')}`);
+      const sellerName = sale.sellerName || sale.seller || (currentUser ? currentUser.name : 'David Ramírez (SuperAdmin)');
       const clientName = sale.client || 'Consumidor Final';
       const paymentMethod = sale.method || sale.paymentMethod || 'Efectivo';
       const taxCondition = (storeConfig.taxCondition || storeConfig.ivaCondition || 'Responsable Inscripto').toUpperCase();
+
+      const cObj = clients.find(c => c.name === clientName);
+      let clientExtraHtml = '';
+      if (cObj && ((cObj.gym && cObj.gym !== '-') || (cObj.province && cObj.province !== '-'))) {
+        const parts = [];
+        if (cObj.gym && cObj.gym !== '-') parts.push(`Gym: ${cObj.gym}`);
+        if (cObj.province && cObj.province !== '-') parts.push(`Prov: ${cObj.province}`);
+        clientExtraHtml = `<div style="font-size:0.8rem; color:#64748b !important; margin-left:2px;">${parts.join(' • ')}</div>`;
+      }
 
       const isTransfer = paymentMethod.toLowerCase().includes('transferencia') || paymentMethod.toLowerCase().includes('mercado pago') || paymentMethod.toLowerCase().includes('mp');
 
@@ -9263,7 +9588,10 @@
           <span style="font-size:0.82rem; color: #1e293b !important;">${storeConfig.businessName || 'GOMEX Nutrition Argentina S.R.L.'}</span><br>
           <span style="font-size:0.82rem; color: #1e293b !important;">${storeConfig.address || 'Av. Libertador 4500, CABA'}</span><br>
           <span style="font-size:0.82rem; color: #1e293b !important;">CUIT: ${storeConfig.cuit || '30-71829340-9'}</span><br>
-          <span style="font-size:0.85rem; font-weight:800; color: #0284c7 !important;">IVA ${taxCondition}</span>
+          <div style="margin-top: 6px; display: inline-block; padding: 2px 10px; background: #e0f2fe; border-radius: 6px; border: 1px solid #bae6fd;">
+            <strong style="font-size:0.88rem; color: #0284c7 !important;">COMPROBANTE X</strong>
+          </div>
+          <div style="font-size:0.72rem; color: #64748b !important; font-weight: 700; margin-top: 2px;">DOCUMENTO NO VÁLIDO COMO FACTURA</div>
         </div>
         <div class="ticket-divider" style="border-top:1px dashed #475569 !important; margin:10px 0;"></div>
         <div style="font-size:0.88rem; line-height:1.5; color:#0f172a !important;">
@@ -9271,6 +9599,7 @@
           <div style="color:#0f172a !important;">Fecha: <span style="color:#0f172a !important;">${sale.date || new Date().toLocaleString()}</span></div>
           <div style="color:#0f172a !important;">Vendedor: <strong style="color:#000 !important;">${sellerName}</strong></div>
           <div style="color:#0f172a !important;">Cliente: <strong style="color:#000 !important;">${clientName}</strong></div>
+          ${clientExtraHtml}
           <div style="color:#0f172a !important;">Forma de Pago: <span style="font-weight:700; color:#0284c7 !important;">${paymentMethod}</span></div>
         </div>
         <div class="ticket-divider" style="border-top:1px dashed #475569 !important; margin:10px 0;"></div>
@@ -9295,6 +9624,9 @@
         <div class="ticket-center" style="text-align:center; font-size:0.8rem; color:#475569 !important;">
           ${storeConfig.ticketMsg || storeConfig.receiptFooter || '¡Gracias por su compra en GOMEX Nutrition!'}
         </div>
+        <div style="text-align:center; font-size:0.7rem; color:#94a3b8 !important; font-weight:700; margin-top:6px; letter-spacing:0.5px;">
+          *** DOCUMENTO NO VÁLIDO COMO FACTURA ***
+        </div>
       `;
 
       const modal = document.getElementById('ticketModal');
@@ -9306,6 +9638,18 @@
     function closeTicketModal() {
       const modal = document.getElementById('ticketModal');
       if (modal) modal.classList.remove('active');
+    }
+
+    function printTicket() {
+      const origTitle = document.title;
+      if (currentTicketSale) {
+        const invNo = currentTicketSale.ticketNo || (typeof currentTicketSale.id === 'string' ? currentTicketSale.id : `CX-0001-${String(currentTicketSale.id || 5100).padStart(8, '0')}`);
+        document.title = `Comprobante_${invNo}`;
+      }
+      window.print();
+      setTimeout(() => {
+        document.title = origTitle;
+      }, 1000);
     }
 
     function initBankConfigUI() {
@@ -9826,19 +10170,32 @@
 
     function renderDBClients() {
       const body = document.getElementById('dbClientsTableBody');
+      if (!body) return;
       body.innerHTML = '';
-      clients.forEach(c => {
+
+      if (!clients || clients.length === 0) {
+        body.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#94a3b8; padding:30px;">No hay clientes registrados.</td></tr>';
+        return;
+      }
+
+      clients.forEach((c, idx) => {
         const tr = document.createElement('tr');
+        const gymBadge = c.gym && c.gym !== '-' ? `<span class="pill" style="font-size:0.75rem; background:rgba(56,189,248,0.15); color:#38bdf8; font-weight:700;">${c.gym}</span>` : '<span style="color:#94a3b8;">-</span>';
+        const provBadge = c.province && c.province !== '-' ? `<span class="pill" style="font-size:0.75rem; background:rgba(16,185,129,0.15); color:#34d399; font-weight:700;">${c.province}</span>` : '<span style="color:#94a3b8;">-</span>';
+
         tr.innerHTML = `
-          <td><strong>${c.cuit}</strong></td>
-          <td>${c.name}</td>
-          <td>${c.phone}</td>
-          <td>${c.email}</td>
+          <td><strong>${c.name}</strong></td>
+          <td>${gymBadge}</td>
+          <td>${c.location || '-'}</td>
+          <td>${provBadge}</td>
+          <td><code style="font-size:0.8rem;">${c.cuit || '-'}</code></td>
+          <td>${c.phone || '-'}</td>
+          <td>${c.email || '-'}</td>
           <td style="white-space: nowrap;">
-            <button class="btn btn-outline" style="padding: 4px 8px; font-size: 0.75rem; border-color: var(--verde-italia); color: var(--verde-italia); margin-right: 4px;" onclick="openEditClientModal('${c.cuit}')">
+            <button class="btn btn-outline" style="padding: 4px 8px; font-size: 0.75rem; border-color: var(--verde-italia); color: var(--verde-italia); margin-right: 4px;" onclick="openEditClientModal(${idx})">
               <ion-icon name="create-outline"></ion-icon> Editar
             </button>
-            <button class="btn btn-red" style="padding: 4px 8px; font-size: 0.75rem;" onclick="deleteClient('${c.cuit}')">
+            <button class="btn btn-red" style="padding: 4px 8px; font-size: 0.75rem;" onclick="deleteClient(${idx})">
               Eliminar
             </button>
           </td>
@@ -9847,16 +10204,21 @@
       });
     }
 
-    function openEditClientModal(cuit) {
-      const client = clients.find(c => c.cuit === cuit);
+    function openEditClientModal(index) {
+      const client = clients[index];
       if (!client) return;
 
-      document.getElementById('editClientOriginalCuit').value = client.cuit;
-      document.getElementById('editClientCuit').value = client.cuit;
-      document.getElementById('editClientName').value = client.name;
-      document.getElementById('editClientPhone').value = client.phone;
-      document.getElementById('editClientEmail').value = client.email;
+      document.getElementById('editClientOriginalCuit').value = client.cuit || '';
+      document.getElementById('editClientOriginalName').value = client.name || '';
+      document.getElementById('editClientName').value = client.name || '';
+      document.getElementById('editClientGym').value = client.gym && client.gym !== '-' ? client.gym : '';
+      document.getElementById('editClientLocation').value = client.location && client.location !== '-' ? client.location : '';
+      document.getElementById('editClientProvince').value = client.province && client.province !== '-' ? client.province : '';
+      document.getElementById('editClientCuit').value = client.cuit && client.cuit !== '-' ? client.cuit : '';
+      document.getElementById('editClientPhone').value = client.phone && client.phone !== '-' ? client.phone : '';
+      document.getElementById('editClientEmail').value = client.email && client.email !== '-' ? client.email : '';
 
+      document.getElementById('editClientModal').dataset.editIndex = index;
       document.getElementById('editClientModal').classList.add('active');
     }
 
@@ -9866,30 +10228,36 @@
 
     function handleUpdateClient(e) {
       e.preventDefault();
-      const origCuit = document.getElementById('editClientOriginalCuit').value;
-      const client = clients.find(c => c.cuit === origCuit);
+      const idx = parseInt(document.getElementById('editClientModal').dataset.editIndex, 10);
+      const client = clients[idx];
       if (!client) return;
 
-      client.cuit = document.getElementById('editClientCuit').value.trim();
       client.name = document.getElementById('editClientName').value.trim();
+      client.gym = document.getElementById('editClientGym').value.trim() || '-';
+      client.location = document.getElementById('editClientLocation').value.trim() || '-';
+      client.province = document.getElementById('editClientProvince').value.trim() || '-';
+      client.cuit = document.getElementById('editClientCuit').value.trim() || '-';
       client.phone = document.getElementById('editClientPhone').value.trim() || '-';
       client.email = document.getElementById('editClientEmail').value.trim() || '-';
 
       saveStorageData();
       closeEditClientModal();
       renderDBClients();
-      populateClientSelect();
+      populateClientSelect(client.name);
 
-      alert('¡Cliente actualizado correctamente!');
+      alert(`¡Cliente "${client.name}" actualizado correctamente!`);
     }
 
-    function deleteClient(cuit) {
-      if (cuit === '00-00000000-0') {
+    function deleteClient(index) {
+      const client = clients[index];
+      if (!client) return;
+      if (client.cuit === '00-00000000-0' || client.name === 'Consumidor Final') {
         alert('No se puede eliminar el cliente Consumidor Final.');
         return;
       }
-      if (confirm('¿Está seguro de eliminar este cliente?')) {
-        clients = clients.filter(c => c.cuit !== cuit);
+      if (confirm(`¿Está seguro de eliminar al cliente "${client.name}"?`)) {
+        clients.splice(index, 1);
+        saveStorageData();
         renderDBClients();
         populateClientSelect();
       }
@@ -10147,19 +10515,50 @@
       if (!body) return;
       body.innerHTML = '';
 
-      if (!sales || sales.length === 0) {
-        body.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:25px;">No hay ventas registradas aún. Emite tu primera venta desde el Punto POS.</td></tr>';
-        document.getElementById('salesTotalToday').textContent = '$0';
-        document.getElementById('salesCountToday').textContent = '0';
+      const query = (document.getElementById('salesSearchInput')?.value || '').toLowerCase().trim();
+
+      const isPrivileged = isSuperOrAdmin();
+      const currentUsername = currentUser ? (currentUser.username || '').toLowerCase() : 'admin';
+      const currentName = currentUser ? (currentUser.name || '').toLowerCase() : 'administrador gomex';
+
+      let visibleSales = sales;
+      if (!isPrivileged) {
+        visibleSales = sales.filter(s => {
+          const sUser = (s.seller || '').toLowerCase();
+          const sName = (s.sellerName || '').toLowerCase();
+          return sUser === currentUsername || sName === currentName || sUser === currentName;
+        });
+      }
+
+      const totalAll = visibleSales.reduce((acc, s) => acc + (Number(s.total) || 0), 0);
+      document.getElementById('salesTotalToday').textContent = `$${totalAll.toLocaleString('es-AR')}`;
+      document.getElementById('salesCountToday').textContent = visibleSales.length;
+
+      const filteredSales = visibleSales.filter((s, idx) => {
+        if (!query) return true;
+        const inv = (s.ticketNo || (typeof s.id === 'string' ? s.id : `CX-0001-${String(sales.length - idx + 5100).padStart(8, '0')}`)).toLowerCase();
+        const cli = (s.client || '').toLowerCase();
+        const sel = (s.sellerName || s.seller || '').toLowerCase();
+        const dat = (s.date || '').toLowerCase();
+        const met = (s.method || s.paymentMethod || '').toLowerCase();
+        const tot = (s.total || '').toString();
+        return inv.includes(query) || cli.includes(query) || sel.includes(query) || dat.includes(query) || met.includes(query) || tot.includes(query);
+      });
+
+      if (filteredSales.length === 0) {
+        const emptyMsg = !isPrivileged
+          ? 'No tenés comprobantes emitidos todavía.'
+          : 'No se encontraron comprobantes que coincidan con la búsqueda.';
+        body.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#94a3b8; padding:25px;">${emptyMsg}</td></tr>`;
         return;
       }
 
-      let totalToday = 0;
-      sales.forEach((s, idx) => {
+      filteredSales.forEach((s) => {
+        const realIdx = sales.indexOf(s);
         const saleTotal = Number(s.total) || 0;
-        totalToday += saleTotal;
-        const invoiceNo = s.ticketNo || s.id || `FC-0001-${String(sales.length - idx + 5100).padStart(8, '0')}`;
+        const invoiceNo = s.ticketNo || (typeof s.id === 'string' && s.id.startsWith('CX-') ? s.id : `CX-0001-${String(sales.length - realIdx + 5100).padStart(8, '0')}`);
         const clientName = s.client || 'Consumidor Final';
+        const sellerDisplay = s.sellerName || (s.seller === 'admin' ? 'David Ramírez (SuperAdmin)' : (s.seller || 'Administrador GOMEX'));
         const dateStr = s.date || '-';
         const methodStr = s.method || s.paymentMethod || 'Efectivo';
 
@@ -10167,26 +10566,250 @@
         tr.innerHTML = `
           <td><strong>${invoiceNo}</strong></td>
           <td>${clientName}</td>
-          <td>${dateStr}</td>
-          <td><span class="pill" style="font-size:0.75rem; background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.3);">${methodStr}</span></td>
-          <td style="color: var(--verde-italia); font-weight: bold;">$${saleTotal.toLocaleString('es-AR')}</td>
           <td>
-            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.8rem; border-color: var(--celeste-brand); color: var(--celeste-brand);" onclick="openTicketByIndex(${idx})">
-              <ion-icon name="receipt-outline"></ion-icon> Ver Ticket
-            </button>
+            <span class="pill" style="font-size:0.75rem; background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.3); font-weight:700;">
+              <ion-icon name="person-outline" style="vertical-align:middle;"></ion-icon> ${sellerDisplay}
+            </span>
+          </td>
+          <td>${dateStr}</td>
+          <td><span class="pill" style="font-size:0.75rem;">${methodStr}</span></td>
+          <td style="color: var(--verde-italia); font-weight: bold;">$${saleTotal.toLocaleString('es-AR')}</td>
+          <td style="white-space: nowrap;">
+            <div style="display: inline-flex; align-items: center; gap: 6px;">
+              <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.78rem; border-color: var(--celeste-brand); color: var(--celeste-brand); display: inline-flex; align-items: center; gap: 4px; border-radius: 8px;" onclick="openTicketByIndex(${realIdx})" title="Ver e Imprimir Ticket">
+                <ion-icon name="receipt-outline"></ion-icon> <span>Ticket</span>
+              </button>
+              <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.78rem; border-color: var(--verde-italia); color: var(--verde-italia); display: inline-flex; align-items: center; gap: 4px; border-radius: 8px;" onclick="openEditSaleModal(${realIdx})" title="Modificar Venta">
+                <ion-icon name="create-outline"></ion-icon> <span>Editar</span>
+              </button>
+              <button class="btn-delete-sale" onclick="deleteSale(${realIdx})" title="Eliminar comprobante">
+                <ion-icon name="trash-outline"></ion-icon>
+              </button>
+            </div>
           </td>
         `;
         body.appendChild(tr);
       });
+    }
 
-      document.getElementById('salesTotalToday').textContent = `$${totalToday.toLocaleString('es-AR')}`;
-      document.getElementById('salesCountToday').textContent = sales.length;
+    async function deleteSale(idx) {
+      const sale = sales[idx];
+      if (!sale) return;
+
+      const invoiceNo = sale.ticketNo || (typeof sale.id === 'string' && sale.id.startsWith('CX-') ? sale.id : `CX-0001-${String(sales.length - idx + 5100).padStart(8, '0')}`);
+      const saleTotal = Number(sale.total) || 0;
+
+      if (!confirm(`¿Está seguro de que desea eliminar el comprobante ${invoiceNo} ($${saleTotal.toLocaleString('es-AR')})?`)) {
+        return;
+      }
+
+      sales.splice(idx, 1);
+      saveStorageData();
+
+      if (typeof supabaseClient !== 'undefined' && supabaseClient && sale.id) {
+        try {
+          await supabaseClient.from('sales').delete().eq('id', sale.id);
+          console.log(`⚡ Venta ${sale.id} eliminada de Supabase.`);
+        } catch (e) {
+          console.warn("Supabase delete sale:", e);
+        }
+      }
+
+      renderSalesTable();
+      renderDashboard();
+      alert(`🗑️ Comprobante "${invoiceNo}" eliminado exitosamente.`);
     }
 
     function openTicketByIndex(idx) {
       if (sales && sales[idx]) {
         showTicket(sales[idx]);
       }
+    }
+
+    function openEditSaleModal(idx) {
+      const sale = sales[idx];
+      if (!sale) return;
+
+      const invoiceNo = sale.ticketNo || (typeof sale.id === 'string' && sale.id.startsWith('CX-') ? sale.id : `CX-0001-${String(sales.length - idx + 5100).padStart(8, '0')}`);
+      document.getElementById('editSaleIndex').value = idx;
+      document.getElementById('editSaleInvoiceNo').value = invoiceNo;
+      document.getElementById('editSaleDate').value = sale.date || new Date().toLocaleString();
+      document.getElementById('editSaleClient').value = sale.client || 'Consumidor Final';
+      document.getElementById('editSaleSeller').value = sale.sellerName || (sale.seller === 'admin' ? 'David Ramírez (SuperAdmin)' : (sale.seller || 'Administrador GOMEX'));
+      document.getElementById('editSaleMethod').value = sale.method || sale.paymentMethod || 'Efectivo';
+      document.getElementById('editSaleTotal').value = Number(sale.total) || 0;
+
+      document.getElementById('editSaleModal').classList.add('active');
+    }
+
+    function closeEditSaleModal() {
+      document.getElementById('editSaleModal').classList.remove('active');
+    }
+
+    function handleUpdateSale(e) {
+      e.preventDefault();
+      const idx = parseInt(document.getElementById('editSaleIndex').value, 10);
+      const sale = sales[idx];
+      if (!sale) return;
+
+      const newDate = document.getElementById('editSaleDate').value.trim();
+      const newClient = document.getElementById('editSaleClient').value.trim();
+      const newSeller = document.getElementById('editSaleSeller').value.trim();
+      const newMethod = document.getElementById('editSaleMethod').value;
+      const newTotal = parseFloat(document.getElementById('editSaleTotal').value) || 0;
+
+      sale.date = newDate;
+      sale.client = newClient;
+      sale.seller = newSeller;
+      sale.sellerName = newSeller;
+      sale.method = newMethod;
+      sale.paymentMethod = newMethod;
+      sale.total = newTotal;
+      sale.subtotal = Math.round(newTotal / 1.21);
+      sale.tax = newTotal - sale.subtotal;
+
+      saveStorageData();
+      closeEditSaleModal();
+      renderSalesTable();
+      renderDashboard();
+
+      alert(`✅ ¡Comprobante "${sale.ticketNo || 'CX-0001'}" modificado correctamente!`);
+    }
+
+    function exportSalesToPDF() {
+      const query = (document.getElementById('salesSearchInput')?.value || '').toLowerCase().trim();
+      const isPrivileged = isSuperOrAdmin();
+      const currentUsername = currentUser ? (currentUser.username || '').toLowerCase() : 'admin';
+      const currentName = currentUser ? (currentUser.name || '').toLowerCase() : 'administrador gomex';
+
+      let visibleSales = sales;
+      if (!isPrivileged) {
+        visibleSales = sales.filter(s => {
+          const sUser = (s.seller || '').toLowerCase();
+          const sName = (s.sellerName || '').toLowerCase();
+          return sUser === currentUsername || sName === currentName || sUser === currentName;
+        });
+      }
+
+      const listToExport = visibleSales.filter((s, idx) => {
+        if (!query) return true;
+        const inv = (s.ticketNo || (typeof s.id === 'string' ? s.id : `CX-0001-${String(sales.length - idx + 5100).padStart(8, '0')}`)).toLowerCase();
+        const cli = (s.client || '').toLowerCase();
+        const sel = (s.sellerName || s.seller || '').toLowerCase();
+        const dat = (s.date || '').toLowerCase();
+        const met = (s.method || s.paymentMethod || '').toLowerCase();
+        const tot = (s.total || '').toString();
+        return inv.includes(query) || cli.includes(query) || sel.includes(query) || dat.includes(query) || met.includes(query) || tot.includes(query);
+      });
+
+      if (listToExport.length === 0) {
+        alert('No hay comprobantes para exportar con el filtro actual.');
+        return;
+      }
+
+      let totalSum = 0;
+      const rowsHtml = listToExport.map((s, idx) => {
+        const val = Number(s.total) || 0;
+        totalSum += val;
+        const realIdx = sales.indexOf(s);
+        const inv = s.ticketNo || (typeof s.id === 'string' && s.id.startsWith('CX-') ? s.id : `CX-0001-${String(sales.length - realIdx + 5100).padStart(8, '0')}`);
+        const cli = s.client || 'Consumidor Final';
+        const sel = s.sellerName || (s.seller === 'admin' ? 'David Ramírez (SuperAdmin)' : (s.seller || 'Administrador GOMEX'));
+        const dat = s.date || '-';
+        const met = s.method || s.paymentMethod || 'Efectivo';
+        return `
+          <tr>
+            <td style="padding: 9px 8px; border-bottom: 1px solid #cbd5e1; font-family: monospace; font-weight: bold;">${inv}</td>
+            <td style="padding: 9px 8px; border-bottom: 1px solid #cbd5e1;">${cli}</td>
+            <td style="padding: 9px 8px; border-bottom: 1px solid #cbd5e1;">${sel}</td>
+            <td style="padding: 9px 8px; border-bottom: 1px solid #cbd5e1;">${dat}</td>
+            <td style="padding: 9px 8px; border-bottom: 1px solid #cbd5e1;">${met}</td>
+            <td style="padding: 9px 8px; border-bottom: 1px solid #cbd5e1; text-align: right; font-weight: bold; color: #16a34a;">$${val.toLocaleString('es-AR')}</td>
+          </tr>
+        `;
+      }).join('');
+
+      const printWin = window.open('', '_blank', 'width=960,height=720');
+      if (!printWin) {
+        alert('Por favor permita ventanas emergentes en su navegador para exportar el reporte en PDF.');
+        return;
+      }
+
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+          <meta charset="UTF-8">
+          <title>Reporte_Historial_Ventas_GOMEX</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 30px; color: #0f172a; background: #ffffff; }
+            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0284c7; padding-bottom: 15px; margin-bottom: 20px; }
+            .title { font-size: 24px; font-weight: 800; color: #0284c7; letter-spacing: -0.5px; }
+            .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; font-weight: 500; }
+            .kpis { display: flex; gap: 20px; margin-bottom: 20px; }
+            .kpi-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px 20px; border-radius: 10px; flex: 1; }
+            .kpi-label { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+            .kpi-val { font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 4px; }
+            table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+            th { background: #0f172a; color: #ffffff; text-align: left; padding: 10px 8px; font-weight: 700; border-radius: 0; }
+            th:last-child { text-align: right; }
+            .footer { margin-top: 30px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+            @media print {
+              body { margin: 12mm; }
+              @page { size: landscape; margin: 10mm; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="title">GOMEX NUTRITION ⚡</div>
+              <div class="subtitle">Reporte Oficial de Historial de Ventas & Comprobantes</div>
+            </div>
+            <div style="text-align: right; font-size: 12px; color: #64748b; line-height: 1.5;">
+              <strong>Fecha Emisión:</strong> ${new Date().toLocaleString()}<br>
+              ${query ? `<strong>Filtro aplicado:</strong> "${query}"` : '<strong>Filtro:</strong> Todos los comprobantes'}
+            </div>
+          </div>
+
+          <div class="kpis">
+            <div class="kpi-card">
+              <div class="kpi-label">Total Facturado</div>
+              <div class="kpi-val" style="color: #16a34a;">$${totalSum.toLocaleString('es-AR')}</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Comprobantes Emitidos</div>
+              <div class="kpi-val">${listToExport.length}</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>N° Comprobante</th>
+                <th>Cliente</th>
+                <th>Emisor / Colaborador</th>
+                <th>Fecha / Hora</th>
+                <th>Método de Pago</th>
+                <th>Total ($)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+
+          <div class="footer">
+            GOMEX Nutrition Argentina S.R.L. • Documento interno de control y auditoría comercial
+          </div>
+        </body>
+        </html>
+      `);
+      printWin.document.close();
+      printWin.focus();
+      setTimeout(() => {
+        try { printWin.print(); } catch (e) { console.warn("Print error:", e); }
+      }, 300);
     }
 
     // ==========================================
@@ -10800,21 +11423,47 @@
       processBatch();
     }
 
-    function openAddClientModal() { document.getElementById('addClientModal').classList.add('active'); }
-    function closeAddClientModal() { document.getElementById('addClientModal').classList.remove('active'); }
+    function openAddClientModal(source = 'default') {
+      clientModalSource = source;
+      document.getElementById('newClientName').value = '';
+      document.getElementById('newClientGym').value = '';
+      document.getElementById('newClientLocation').value = '';
+      document.getElementById('newClientProvince').value = '';
+      document.getElementById('newClientCuit').value = '';
+      document.getElementById('newClientPhone').value = '';
+      document.getElementById('newClientEmail').value = '';
+      document.getElementById('addClientModal').classList.add('active');
+    }
+
+    function closeAddClientModal() {
+      document.getElementById('addClientModal').classList.remove('active');
+      clientModalSource = 'default';
+    }
 
     function handleSaveClient(e) {
       e.preventDefault();
-      const cuit = document.getElementById('newClientCuit').value.trim();
       const name = document.getElementById('newClientName').value.trim();
+      const gym = document.getElementById('newClientGym').value.trim() || '-';
+      const location = document.getElementById('newClientLocation').value.trim() || '-';
+      const province = document.getElementById('newClientProvince').value.trim() || '-';
+      const cuit = document.getElementById('newClientCuit').value.trim() || `CLI-${Date.now().toString().slice(-6)}`;
       const phone = document.getElementById('newClientPhone').value.trim() || '-';
       const email = document.getElementById('newClientEmail').value.trim() || '-';
 
-      clients.push({ cuit, name, phone, email });
+      const newClient = { cuit, name, gym, location, province, phone, email };
+      clients.push(newClient);
       saveStorageData();
       closeAddClientModal();
       renderDBClients();
-      populateClientSelect();
+      populateClientSelect(name);
+
+      if (clientModalSource === 'checkout') {
+        const sel = document.getElementById('checkoutClientSelect');
+        if (sel) sel.value = name;
+        alert(`¡Cliente "${name}" registrado y seleccionado para esta venta!`);
+      } else {
+        alert(`¡Cliente "${name}" guardado exitosamente!`);
+      }
     }
 
     function closeBoxSession() {
