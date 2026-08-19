@@ -132,15 +132,87 @@ DROP POLICY IF EXISTS "Allow public all on offers" ON public.offers;
 DROP POLICY IF EXISTS "Allow public all on expenses" ON public.expenses;
 DROP POLICY IF EXISTS "Allow public all on store_config" ON public.store_config;
 
--- Creación de políticas de acceso completo para cliente público/anónimo
-CREATE POLICY "Allow public all on categories" ON public.categories FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Allow public all on products" ON public.products FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Allow public all on clients" ON public.clients FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Allow public all on sales" ON public.sales FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Allow public all on collaborators" ON public.collaborators FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Allow public all on offers" ON public.offers FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Allow public all on expenses" ON public.expenses FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Allow public all on store_config" ON public.store_config FOR ALL TO public USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Public read categories" ON public.categories;
+DROP POLICY IF EXISTS "Public insert/update categories" ON public.categories;
+DROP POLICY IF EXISTS "Public modify categories" ON public.categories;
+DROP POLICY IF EXISTS "Public delete categories" ON public.categories;
+
+DROP POLICY IF EXISTS "Public read products" ON public.products;
+DROP POLICY IF EXISTS "Public insert/update products" ON public.products;
+DROP POLICY IF EXISTS "Public update products" ON public.products;
+DROP POLICY IF EXISTS "Public delete products" ON public.products;
+
+DROP POLICY IF EXISTS "Public read offers" ON public.offers;
+DROP POLICY IF EXISTS "Public insert offers" ON public.offers;
+DROP POLICY IF EXISTS "Public update offers" ON public.offers;
+DROP POLICY IF EXISTS "Public delete offers" ON public.offers;
+
+DROP POLICY IF EXISTS "Public read store_config" ON public.store_config;
+DROP POLICY IF EXISTS "Public update store_config" ON public.store_config;
+DROP POLICY IF EXISTS "Public modify store_config" ON public.store_config;
+
+DROP POLICY IF EXISTS "Public read clients" ON public.clients;
+DROP POLICY IF EXISTS "Public insert clients" ON public.clients;
+DROP POLICY IF EXISTS "Public update clients" ON public.clients;
+DROP POLICY IF EXISTS "Public delete clients" ON public.clients;
+
+DROP POLICY IF EXISTS "Public read sales" ON public.sales;
+DROP POLICY IF EXISTS "Public insert sales" ON public.sales;
+DROP POLICY IF EXISTS "Public delete sales" ON public.sales;
+
+DROP POLICY IF EXISTS "Public read collaborators" ON public.collaborators;
+DROP POLICY IF EXISTS "Public manage collaborators" ON public.collaborators;
+DROP POLICY IF EXISTS "Public update collaborators" ON public.collaborators;
+DROP POLICY IF EXISTS "Public delete collaborators" ON public.collaborators;
+
+DROP POLICY IF EXISTS "Public read expenses" ON public.expenses;
+DROP POLICY IF EXISTS "Public insert expenses" ON public.expenses;
+DROP POLICY IF EXISTS "Public delete expenses" ON public.expenses;
+
+-- Creación de políticas de acceso granulares para cliente y operaciones del POS
+-- 1. Categorías
+CREATE POLICY "Public read categories" ON public.categories FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public insert categories" ON public.categories FOR INSERT TO anon, authenticated WITH CHECK (name IS NOT NULL AND length(name) > 0);
+CREATE POLICY "Public modify categories" ON public.categories FOR UPDATE TO anon, authenticated USING (id IS NOT NULL) WITH CHECK (name IS NOT NULL AND length(name) > 0);
+CREATE POLICY "Public delete categories" ON public.categories FOR DELETE TO anon, authenticated USING (id IS NOT NULL);
+
+-- 2. Productos
+CREATE POLICY "Public read products" ON public.products FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public insert products" ON public.products FOR INSERT TO anon, authenticated WITH CHECK (name IS NOT NULL AND price >= 0);
+CREATE POLICY "Public update products" ON public.products FOR UPDATE TO anon, authenticated USING (id IS NOT NULL) WITH CHECK (price >= 0);
+CREATE POLICY "Public delete products" ON public.products FOR DELETE TO anon, authenticated USING (id IS NOT NULL);
+
+-- 3. Ofertas
+CREATE POLICY "Public read offers" ON public.offers FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public insert offers" ON public.offers FOR INSERT TO anon, authenticated WITH CHECK (product_id IS NOT NULL);
+CREATE POLICY "Public update offers" ON public.offers FOR UPDATE TO anon, authenticated USING (product_id IS NOT NULL) WITH CHECK (product_id IS NOT NULL);
+CREATE POLICY "Public delete offers" ON public.offers FOR DELETE TO anon, authenticated USING (product_id IS NOT NULL);
+
+-- 4. Configuración de Tienda
+CREATE POLICY "Public read store_config" ON public.store_config FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public update store_config" ON public.store_config FOR INSERT TO anon, authenticated WITH CHECK (id = 'main');
+CREATE POLICY "Public modify store_config" ON public.store_config FOR UPDATE TO anon, authenticated USING (id = 'main');
+
+-- 5. Clientes
+CREATE POLICY "Public read clients" ON public.clients FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public insert clients" ON public.clients FOR INSERT TO anon, authenticated WITH CHECK (name IS NOT NULL);
+CREATE POLICY "Public update clients" ON public.clients FOR UPDATE TO anon, authenticated USING (cuit IS NOT NULL) WITH CHECK (name IS NOT NULL);
+CREATE POLICY "Public delete clients" ON public.clients FOR DELETE TO anon, authenticated USING (cuit IS NOT NULL);
+
+-- 6. Ventas
+CREATE POLICY "Public read sales" ON public.sales FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public insert sales" ON public.sales FOR INSERT TO anon, authenticated WITH CHECK (id IS NOT NULL);
+CREATE POLICY "Public delete sales" ON public.sales FOR DELETE TO anon, authenticated USING (id IS NOT NULL);
+
+-- 7. Colaboradores y Gastos
+CREATE POLICY "Public read collaborators" ON public.collaborators FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public manage collaborators" ON public.collaborators FOR INSERT TO anon, authenticated WITH CHECK (username IS NOT NULL);
+CREATE POLICY "Public update collaborators" ON public.collaborators FOR UPDATE TO anon, authenticated USING (id IS NOT NULL) WITH CHECK (username IS NOT NULL);
+CREATE POLICY "Public delete collaborators" ON public.collaborators FOR DELETE TO anon, authenticated USING (id IS NOT NULL);
+
+CREATE POLICY "Public read expenses" ON public.expenses FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public insert expenses" ON public.expenses FOR INSERT TO anon, authenticated WITH CHECK (id IS NOT NULL);
+CREATE POLICY "Public delete expenses" ON public.expenses FOR DELETE TO anon, authenticated USING (id IS NOT NULL);
 
 -- ==============================================================================
 -- HABILITACIÓN DE TIEMPO REAL (SUPABASE REALTIME)
