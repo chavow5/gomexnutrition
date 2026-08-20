@@ -400,12 +400,9 @@ INSERT INTO public.categories (name) VALUES
 ('Combos & Packs')
 ON CONFLICT (name) DO NOTHING;
 
--- 2. Productos oficiales GOMEX
+-- 2. Producto oficial inicial GOMEX (1 solo producto base de contingencia)
 INSERT INTO public.products (id, code, internal_code, name, category, cost, tax_rate, margin, price, stock, unit, flavor, portion, description, activos, image, featured, badge) VALUES
-(1, '779812345601', 'GMX-CRE-01', 'GOMEX Creatina Monohidratada en Gomitas', 'Rendimiento & Fuerza', 14000, 21, 103.57, 28500, 45, 'Doypack 60 Gomitas', 'Frutos Rojos', '2 gomitas diarias (3g Creatina)', 'Creatina monohidratada en gomitas masticables. Fuerza y recuperación sin shakers ni textura arenosa.', '["Creatina Monohidratada 100% Pura", "Electrolitos"]'::jsonb, 'public/bolsaGomitas.jpg', true, 'MÁS VENDIDO ⭐'),
-(2, '779812345602', 'GMX-VIT-02', 'GOMEX Multivitamínico + Inmuno Defense', 'Salud & Inmunidad', 11000, 21, 108.18, 22900, 60, 'Caja 60 Gomitas', 'Cítricos Naranja & Limón', '2 gomitas por la mañana', '12 vitaminas y minerales clave para reforzar defensas y energía diaria.', '["Vitamina C (500mg)", "Vitamina D3", "Zinc Quelado", "Complejo B"]'::jsonb, 'public/cajaGomitas.jpg', true, 'DEFENSAS 🛡️'),
-(3, '779812345603', 'GMX-SLP-03', 'GOMEX Sleep & Recovery (Melatonina + Magnesio)', 'Descanso & Bienestar', 12000, 21, 107.50, 24900, 38, 'Doypack 60 Gomitas', 'Mora & Lavanda', '2 gomitas antes de dormir', 'Conciliación rápida del sueño y descanso profundo sin somnolencia diurna.', '["Melatonina Pura (3mg)", "Citrato de Magnesio", "L-Teanina"]'::jsonb, 'public/bolsaGomita.jpg', true, 'SUEÑO PROFUNDO 🌙'),
-(4, '779812345604', 'GMX-TRP-04', 'GOMEX Pack Trío Rutina 360°', 'Combos & Packs', 33000, 21, 108.79, 68900, 20, 'Combo 3 Productos (180 Gomitas)', 'Surtido Frutal', 'Rutina completa día y noche', 'Creatina + Multivitamínico + Sleep con 20% de ahorro.', '["1x Creatina GOMEX", "1x Multivitamínico GOMEX", "1x Sleep GOMEX"]'::jsonb, 'public/gomitas.jpg', true, 'OFERTA PACK -20% 🔥')
+(1, '779812345601', 'GMX-CRE-01', 'GOMEX Creatina Monohidratada en Gomitas', 'Rendimiento & Fuerza', 14000, 21, 103.57, 45000, 45, 'Doypack 60 Gomitas', 'Frutos Rojos', '2 gomitas diarias (3g Creatina)', 'Creatina monohidratada en gomitas masticables. Fuerza y recuperación sin shakers ni textura arenosa.', '["Creatina Monohidratada 100% Pura", "Electrolitos"]'::jsonb, 'public/bolsaGomitas.jpg', true, 'MÁS VENDIDO ⭐')
 ON CONFLICT (id) DO NOTHING;
 
 -- 3. Cliente inicial por defecto

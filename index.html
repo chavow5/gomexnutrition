@@ -7060,7 +7060,7 @@
       return u === 'superadmin' || u === 'admin' || r.includes('super') || r.includes('admin') || r.includes('dueño') || r.includes('socio');
     }
 
-    // Muestra Oficial GOMEX (opcional para pruebas o restaurar)
+    // Muestra Oficial GOMEX (1 solo producto base por defecto)
     const officialSampleProducts = [
       {
         id: 1,
@@ -7071,7 +7071,7 @@
         cost: 14000,
         taxRate: 21,
         margin: 103.57,
-        price: 28500,
+        price: 45000,
         stock: 45,
         unit: 'Doypack 60 Gomitas',
         flavor: 'Frutos Rojos',
@@ -7081,66 +7081,6 @@
         image: 'public/bolsaGomitas.jpg',
         featured: true,
         badge: 'MÁS VENDIDO ⭐'
-      },
-      {
-        id: 2,
-        code: '779812345602',
-        internalCode: 'GMX-VIT-02',
-        name: 'GOMEX Multivitamínico + Inmuno Defense',
-        category: 'Salud & Inmunidad',
-        cost: 11000,
-        taxRate: 21,
-        margin: 108.18,
-        price: 22900,
-        stock: 60,
-        unit: 'Caja 60 Gomitas',
-        flavor: 'Cítricos Naranja & Limón',
-        portion: '2 gomitas por la mañana',
-        description: '12 vitaminas y minerales clave para reforzar defensas y energía diaria.',
-        activos: ['Vitamina C (500mg)', 'Vitamina D3', 'Zinc Quelado', 'Complejo B'],
-        image: 'public/cajaGomitas.jpg',
-        featured: true,
-        badge: 'DEFENSAS 🛡️'
-      },
-      {
-        id: 3,
-        code: '779812345603',
-        internalCode: 'GMX-SLP-03',
-        name: 'GOMEX Sleep & Recovery (Melatonina + Magnesio)',
-        category: 'Descanso & Bienestar',
-        cost: 12000,
-        taxRate: 21,
-        margin: 107.50,
-        price: 24900,
-        stock: 38,
-        unit: 'Doypack 60 Gomitas',
-        flavor: 'Mora & Lavanda',
-        portion: '2 gomitas antes de dormir',
-        description: 'Conciliación rápida del sueño y descanso profundo sin somnolencia diurna.',
-        activos: ['Melatonina Pura (3mg)', 'Citrato de Magnesio', 'L-Teanina'],
-        image: 'public/bolsaGomita.jpg',
-        featured: true,
-        badge: 'SUEÑO PROFUNDO 🌙'
-      },
-      {
-        id: 4,
-        code: '779812345604',
-        internalCode: 'GMX-TRP-04',
-        name: 'GOMEX Pack Trío Rutina 360°',
-        category: 'Combos & Packs',
-        cost: 33000,
-        taxRate: 21,
-        margin: 108.79,
-        price: 68900,
-        stock: 20,
-        unit: 'Combo 3 Productos (180 Gomitas)',
-        flavor: 'Surtido Frutal',
-        portion: 'Rutina completa día y noche',
-        description: 'Creatina + Multivitamínico + Sleep con 20% de ahorro.',
-        activos: ['1x Creatina GOMEX', '1x Multivitamínico GOMEX', '1x Sleep GOMEX'],
-        image: 'public/gomitas.jpg',
-        featured: true,
-        badge: 'OFERTA PACK -20% 🔥'
       }
     ];
 
