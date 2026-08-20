@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS public.sales (
 
 -- 5. TABLA: collaborators (Colaboradores y usuarios del sistema POS)
 CREATE TABLE IF NOT EXISTS public.collaborators (
-    id SERIAL PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     name TEXT NOT NULL,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
@@ -205,10 +205,7 @@ CREATE POLICY "Public insert sales" ON public.sales FOR INSERT TO anon, authenti
 CREATE POLICY "Public delete sales" ON public.sales FOR DELETE TO anon, authenticated USING (id IS NOT NULL);
 
 -- 7. Colaboradores y Gastos
-CREATE POLICY "Public read collaborators" ON public.collaborators FOR SELECT TO anon, authenticated USING (true);
-CREATE POLICY "Public manage collaborators" ON public.collaborators FOR INSERT TO anon, authenticated WITH CHECK (username IS NOT NULL);
-CREATE POLICY "Public update collaborators" ON public.collaborators FOR UPDATE TO anon, authenticated USING (id IS NOT NULL) WITH CHECK (username IS NOT NULL);
-CREATE POLICY "Public delete collaborators" ON public.collaborators FOR DELETE TO anon, authenticated USING (id IS NOT NULL);
+CREATE POLICY "Allow public all on collaborators" ON public.collaborators FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 CREATE POLICY "Public read expenses" ON public.expenses FOR SELECT TO anon, authenticated USING (true);
 CREATE POLICY "Public insert expenses" ON public.expenses FOR INSERT TO anon, authenticated WITH CHECK (id IS NOT NULL);
@@ -219,20 +216,23 @@ CREATE POLICY "Public delete expenses" ON public.expenses FOR DELETE TO anon, au
 -- ==============================================================================
 
 DO $$
+DECLARE
+    t text;
+    tables text[] := ARRAY['categories', 'products', 'clients', 'sales', 'collaborators', 'offers', 'expenses', 'store_config'];
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
         CREATE PUBLICATION supabase_realtime;
     END IF;
-END $$;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.categories;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.products;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.clients;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.sales;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.collaborators;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.offers;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.expenses;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.store_config;
+    FOREACH t IN ARRAY tables LOOP
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_publication_tables 
+            WHERE pubname = 'supabase_realtime' AND tablename = t
+        ) THEN
+            EXECUTE format('ALTER PUBLICATION supabase_realtime ADD TABLE public.%I', t);
+        END IF;
+    END LOOP;
+END $$;
 
 -- ==============================================================================
 -- DATOS SEMILLA INICIALES (SEED DATA)

@@ -7326,7 +7326,7 @@
 
     function dbColab(col) {
       return {
-        id: col.id,
+        id: Number(col.id),
         name: col.name,
         username: col.username,
         password: col.password,
@@ -7429,19 +7429,26 @@
     }
 
     async function syncColabToSupabase(col) {
-      if (!isSupabaseConnected || !supabaseClient) return;
+      if (!isSupabaseConnected || !supabaseClient) return { success: true, localOnly: true };
       try {
-        const { error } = await supabaseClient.from('collaborators').upsert(dbColab(col), { onConflict: 'id' });
-        if (error) console.warn("Supabase sync colab error:", error.message);
+        const { data, error } = await supabaseClient.from('collaborators').upsert(dbColab(col), { onConflict: 'id' });
+        if (error) {
+          console.warn("Supabase sync colab error:", error.message);
+          return { success: false, error };
+        } else {
+          console.log(`⚡ Colaborador "${col.name}" sincronizado en Supabase Cloud.`);
+          return { success: true, data };
+        }
       } catch (err) {
         console.warn("Error syncColabToSupabase:", err);
+        return { success: false, error: err };
       }
     }
 
     async function deleteColabFromSupabase(id) {
       if (!isSupabaseConnected || !supabaseClient) return;
       try {
-        await supabaseClient.from('collaborators').delete().eq('id', id);
+        await supabaseClient.from('collaborators').delete().eq('id', Number(id));
         console.log(`⚡ Colaborador ID ${id} eliminado de Supabase.`);
       } catch (err) {
         console.warn("Error deleteColabFromSupabase:", err);
@@ -7500,6 +7507,7 @@
           }
         } else {
           supabaseConfig = { ...defaultSupabaseConfig };
+          localStorage.setItem('gomex_supabase_config', JSON.stringify(supabaseConfig));
         }
 
         if (supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey && typeof window.supabase !== 'undefined') {
@@ -10404,6 +10412,36 @@
       alert('¡Datos de cuentas de cobro y Mercado Pago guardados y sincronizados en Supabase correctamente!');
     }
 
+    function renderStockTable() {
+      renderDBProducts();
+    }
+
+    function renderImportHistory() {
+      const body = document.getElementById('importHistoryTableBody');
+      if (!body) return;
+      body.innerHTML = '';
+      if (!importHistory || importHistory.length === 0) {
+        body.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#94a3b8; padding:20px;">No hay importaciones registradas.</td></tr>`;
+        return;
+      }
+      importHistory.forEach(rec => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${rec.id}</td>
+          <td>${rec.date}</td>
+          <td>${rec.filename}</td>
+          <td>${rec.totalRows}</td>
+          <td>${rec.processedRows}</td>
+          <td><strong style="color:var(--verde-italia);">${rec.okRows}</strong></td>
+          <td><strong style="color:${rec.errorRows > 0 ? '#ef4444' : '#94a3b8'};">${rec.errorRows}</strong></td>
+          <td>${rec.type}</td>
+          <td>${rec.user}</td>
+          <td><span class="status-badge ${rec.status === 'Completado' ? 'completed' : 'processing'}">${rec.status}</span></td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
     // GESTIÓN Y RENDERIZADO DE MÓDULO COMPRAS & INGRESO DE STOCK
     function renderPurchasesTable() {
       const body = document.getElementById('purchasesTableBody');
@@ -11150,12 +11188,21 @@
       };
 
       colaboradores.push(newColab);
-
       saveStorageData(true);
-      syncColabToSupabase(newColab);
+      const res = await syncColabToSupabase(newColab);
+      if (res && !res.success && res.error) {
+        if (res.error.code === '23505' || (res.error.message && (res.error.message.includes('duplicate') || res.error.message.includes('unique') || res.error.message.includes('collaborators_username_key')))) {
+          // Revertir push local si ya existía en la BD
+          colaboradores = colaboradores.filter(c => c.id !== newColab.id);
+          saveStorageData(true);
+          renderDBColaboradores();
+          alert(`⚠️ El nombre de usuario "@${username}" ya está registrado en la base de datos de Supabase. Por favor elegí otro nombre de usuario.`);
+          return;
+        }
+      }
       closeAddColaboradorModal();
       renderDBColaboradores();
-      alert(`✅ ¡Colaborador "${name}" registrado correctamente en la base de datos!`);
+      alert(`✅ ¡Colaborador "${name}" registrado y sincronizado en la base de datos!`);
     }
 
     function openEditColaboradorModal(id) {
@@ -11225,7 +11272,7 @@
       }
 
       saveStorageData(true);
-      syncColabToSupabase(col);
+      await syncColabToSupabase(col);
       closeEditColaboradorModal();
       renderDBColaboradores();
       alert(`✅ ¡Colaborador "${col.name}" y sus permisos fueron actualizados en la base de datos!`);
@@ -11243,7 +11290,7 @@
       if (confirm(`¿Estás seguro de eliminar a ${col.name} (@${col.username})? Se eliminará de la base de datos.`)) {
         colaboradores = colaboradores.filter(c => c.id !== id);
         saveStorageData(true);
-        deleteColabFromSupabase(id);
+        await deleteColabFromSupabase(id);
         renderDBColaboradores();
         alert('🗑️ Colaborador eliminado exitosamente de la base de datos.');
       }
