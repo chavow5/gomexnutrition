@@ -6745,14 +6745,13 @@
           <input type="text" id="editColabName" class="input-field" required>
         </div>
 
-        <div class="form-row-2">
           <div class="form-group">
             <label>Nombre de Usuario (Login) *</label>
             <input type="text" id="editColabUsername" class="input-field" required>
           </div>
           <div class="form-group">
-            <label>Contraseña de Acceso *</label>
-            <input type="password" id="editColabPassword" class="input-field" required>
+            <label>Nueva Contraseña (Opcional)</label>
+            <input type="password" id="editColabPassword" class="input-field" placeholder="Dejar en blanco para mantener la actual" autocomplete="new-password">
           </div>
         </div>
 
@@ -7179,7 +7178,6 @@
         id: 1,
         name: 'David Ramírez (SuperAdmin)',
         username: 'superadmin',
-        password: '123',
         role: 'Super Administrador',
         permissions: {
           pos: true, ventas: true, presupuesto: true, notas: true,
@@ -7191,7 +7189,6 @@
         id: 2,
         name: 'Administrador GOMEX',
         username: 'admin',
-        password: '123',
         role: 'Administrador',
         permissions: {
           pos: true, ventas: true, presupuesto: true, notas: true,
@@ -7253,9 +7250,9 @@
     // INTEGRACIÓN Y SINCRONIZACIÓN SUPABASE CLOUD (POSTGRESQL)
     // ==========================================
     const defaultSupabaseConfig = {
-      url: "https://jdhscjhashyqmnmuksuk.supabase.co",
-      anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkaHNjamhhc2h5cW1ubXVrc3VrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNDcwODAsImV4cCI6MjEwMjcyMzA4MH0.Jr-bD7XquS34_8GIblgGCfsB-SoPxvb01WtmSG4QhEk",
-      projectId: "jdhscjhashyqmnmuksuk",
+      url: "https://vdghijvwhrbiorytnpof.supabase.co",
+      anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkZ2hpanZ3aHJiaW9yeXRucG9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNjM4NjMsImV4cCI6MjEwMjYzOTg2M30.3limv7B6kynxtUTVURskHwCvGrxvuW5LMkpqjfbYudw",
+      projectId: "vdghijvwhrbiorytnpof",
       region: "sa-east-1 (São Paulo)"
     };
 
@@ -7329,7 +7326,6 @@
         id: Number(col.id),
         name: col.name,
         username: col.username,
-        password: col.password,
         role: col.role || 'Administrador',
         permissions: col.permissions || { pos: true, ventas: true, presupuesto: true, notas: true, catalogo: true, stock: true, clientes: true, colaboradores: true, importaciones: true, config: true }
       };
@@ -7428,15 +7424,25 @@
       }
     }
 
-    async function syncColabToSupabase(col) {
+    async function syncColabToSupabase(col, plainPassword = null) {
       if (!isSupabaseConnected || !supabaseClient) return { success: true, localOnly: true };
       try {
-        const { data, error } = await supabaseClient.from('collaborators').upsert(dbColab(col), { onConflict: 'id' });
+        const { data, error } = await supabaseClient.rpc('admin_upsert_collaborator', {
+          p_id: Number(col.id),
+          p_name: col.name,
+          p_username: col.username,
+          p_password: plainPassword || '',
+          p_role: col.role || 'Vendedor',
+          p_permissions: col.permissions || {}
+        });
         if (error) {
           console.warn("Supabase sync colab error:", error.message);
           return { success: false, error };
+        } else if (data && !data.success) {
+          console.warn("Supabase admin_upsert_collaborator failed:", data.message);
+          return { success: false, error: new Error(data.message) };
         } else {
-          console.log(`⚡ Colaborador "${col.name}" sincronizado en Supabase Cloud.`);
+          console.log(`⚡ Colaborador "${col.name}" sincronizado de forma segura en Supabase Cloud.`);
           return { success: true, data };
         }
       } catch (err) {
@@ -7625,13 +7631,12 @@
         }
 
         // 5. COLABORADORES
-        const { data: cloudColabs, error: colabErr } = await supabaseClient.from('collaborators').select('*').order('id');
+        const { data: cloudColabs, error: colabErr } = await supabaseClient.from('collaborators').select('id, name, username, role, permissions, created_at').order('id');
         if (!colabErr && cloudColabs && cloudColabs.length > 0) {
           colaboradores = cloudColabs.map(c => ({
             id: c.id,
             name: c.name,
             username: c.username,
-            password: c.password,
             role: c.role || 'Administrador',
             permissions: c.permissions || {
               pos: true, ventas: true, presupuesto: true, notas: true,
@@ -7641,8 +7646,6 @@
           }));
           console.log(`⚡ Sincronizados ${cloudColabs.length} colaboradores desde Supabase Cloud.`);
         } else if (!colabErr && (!cloudColabs || cloudColabs.length === 0)) {
-          const colabRows = defaultColaboradores.map(dbColab);
-          await supabaseClient.from('collaborators').upsert(colabRows);
           colaboradores = [...defaultColaboradores];
         }
 
@@ -7764,13 +7767,12 @@
           })
           .on('postgres_changes', { event: '*', schema: 'public', table: 'collaborators' }, async () => {
             console.log("⚡ Cambio en colaboradores detectado en tiempo real.");
-            const { data } = await supabaseClient.from('collaborators').select('*').order('id');
+            const { data } = await supabaseClient.from('collaborators').select('id, name, username, role, permissions, created_at').order('id');
             if (data && data.length) {
               colaboradores = data.map(c => ({
                 id: c.id,
                 name: c.name,
                 username: c.username,
-                password: c.password,
                 role: c.role || 'Administrador',
                 permissions: c.permissions || {
                   pos: true, ventas: true, presupuesto: true, notas: true,
@@ -7806,9 +7808,9 @@
     function openSupabaseConfigModal() {
       const modal = document.getElementById('supabaseConfigModal');
       if (modal) {
-        document.getElementById('sbUrlInput').value = supabaseConfig.url || 'https://jdhscjhashyqmnmuksuk.supabase.co';
+        document.getElementById('sbUrlInput').value = supabaseConfig.url || 'https://vdghijvwhrbiorytnpof.supabase.co';
         document.getElementById('sbAnonKeyInput').value = supabaseConfig.anonKey || '';
-        document.getElementById('sbProjectIdInput').value = supabaseConfig.projectId || 'jdhscjhashyqmnmuksuk';
+        document.getElementById('sbProjectIdInput').value = supabaseConfig.projectId || 'vdghijvwhrbiorytnpof';
         document.getElementById('sbRegionInput').value = supabaseConfig.region || 'sa-east-1 (São Paulo)';
         modal.style.display = 'flex';
       }
@@ -8064,12 +8066,15 @@
           // Filtrar colaboradores de prueba anteriores si existen
           const cleaned = parsed.filter(c =>
             !['eugenio', 'rosita', 'jorge'].includes(c.username.toLowerCase())
-          );
+          ).map(c => {
+            const { password, ...safeCol } = c;
+            return safeCol;
+          });
           if (!cleaned.some(c => c.username.toLowerCase() === 'superadmin')) {
-            cleaned.unshift({ id: 1, name: 'David Ramírez (SuperAdmin)', username: 'superadmin', password: '123', role: 'Super Administrador' });
+            cleaned.unshift({ id: 1, name: 'David Ramírez (SuperAdmin)', username: 'superadmin', role: 'Super Administrador' });
           }
           if (!cleaned.some(c => c.username.toLowerCase() === 'admin')) {
-            cleaned.push({ id: 2, name: 'Administrador GOMEX', username: 'admin', password: '123', role: 'Administrador' });
+            cleaned.push({ id: 2, name: 'Administrador GOMEX', username: 'admin', role: 'Administrador' });
           }
           colaboradores = cleaned;
         } else {
@@ -8142,15 +8147,7 @@
             });
           }
 
-          // 4. Colaboradores
-          if (colaboradores.length > 0) {
-            const dbCols = colaboradores.map(dbColab);
-            supabaseClient.from('collaborators').upsert(dbCols, { onConflict: 'id' }).then(({ error }) => {
-              if (error) console.warn("Supabase upsert colabs error:", error.message);
-            });
-          }
-
-          // 5. Categorías
+          // 4. Categorías
           if (categories.length > 0) {
             const catRows = categories.map(name => ({ name }));
             supabaseClient.from('categories').upsert(catRows, { onConflict: 'name' }).then(({ error }) => {
@@ -9239,59 +9236,68 @@
       });
     }
 
-    function handleLogin(event) {
+    async function handleLogin(event) {
       event.preventDefault();
       const userVal = document.getElementById('username').value.trim();
       const passVal = document.getElementById('password').value.trim();
       const errorDiv = document.getElementById('loginError');
+      const errorMsg = document.getElementById('loginErrorMsg');
+      const submitBtn = event.target.querySelector('button[type="submit"]');
 
-      let matchedColab = colaboradores.find(c =>
-        c.username.toLowerCase() === userVal.toLowerCase() && c.password === passVal
-      );
-
-      // SuperAdmin y Admin Master fallbacks (soporta 123 o 12345)
-      if (!matchedColab) {
-        if (userVal.toLowerCase() === 'superadmin' && (passVal === '123' || passVal === '12345')) {
-          matchedColab = {
-            id: 1,
-            name: 'David Ramírez (SuperAdmin)',
-            username: 'superadmin',
-            password: passVal,
-            role: 'Super Administrador',
-            permissions: {
-              pos: true, ventas: true, presupuesto: true, notas: true,
-              catalogo: true, stock: true, clientes: true, colaboradores: true,
-              importaciones: true, config: true
-            }
-          };
-        } else if (userVal.toLowerCase() === 'admin' && (passVal === '123' || passVal === '12345')) {
-          matchedColab = {
-            id: 2,
-            name: 'Administrador GOMEX',
-            username: 'admin',
-            password: passVal,
-            role: 'Administrador',
-            permissions: {
-              pos: true, ventas: true, presupuesto: true, notas: true,
-              catalogo: true, stock: true, clientes: true, colaboradores: true,
-              importaciones: true, config: true
-            }
-          };
-        }
+      if (!userVal || !passVal) {
+        errorDiv.style.display = 'flex';
+        errorMsg.textContent = 'Por favor ingrese su usuario y contraseña.';
+        return;
       }
 
-      if (matchedColab) {
-        currentUser = matchedColab;
-        document.getElementById('headerUserName').textContent = matchedColab.name;
-        document.getElementById('headerUserAvatar').textContent = matchedColab.name.charAt(0).toUpperCase();
-        document.getElementById('loginOverlay').classList.add('hidden');
-        switchView('pos');
-        errorDiv.style.display = 'none';
-        applyUserPermissions(matchedColab);
-        initApp();
-      } else {
+      if (!supabaseClient) {
         errorDiv.style.display = 'flex';
-        document.getElementById('loginErrorMsg').textContent = 'Usuario o contraseña incorrectos. Verifique sus datos e intente nuevamente.';
+        errorMsg.textContent = 'No hay conexión activa con la base de datos Supabase. Verifique su conexión.';
+        return;
+      }
+
+      const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span style="display:inline-flex; align-items:center; gap:8px;"><ion-icon name="sync-outline" class="spin-icon"></ion-icon> Verificando credenciales...</span>';
+      }
+
+      try {
+        const { data, error } = await supabaseClient.rpc('login_collaborator', {
+          p_username: userVal,
+          p_password: passVal
+        });
+
+        if (error) {
+          console.error("Error al autenticar en Supabase:", error);
+          errorDiv.style.display = 'flex';
+          errorMsg.textContent = `Error de servidor: ${error.message || 'No se pudo comunicar con Supabase'}`;
+          return;
+        }
+
+        if (data && data.success && data.user) {
+          const authUser = data.user;
+          currentUser = authUser;
+          document.getElementById('headerUserName').textContent = authUser.name;
+          document.getElementById('headerUserAvatar').textContent = authUser.name.charAt(0).toUpperCase();
+          document.getElementById('loginOverlay').classList.add('hidden');
+          switchView('pos');
+          errorDiv.style.display = 'none';
+          applyUserPermissions(authUser);
+          initApp();
+        } else {
+          errorDiv.style.display = 'flex';
+          errorMsg.textContent = (data && data.message) ? data.message : 'Usuario o contraseña incorrectos. Verifique sus datos e intente nuevamente.';
+        }
+      } catch (err) {
+        console.error("Login catch error:", err);
+        errorDiv.style.display = 'flex';
+        errorMsg.textContent = 'Error de conexión con la base de datos Supabase.';
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnText || '<ion-icon name="log-in-outline" style="font-size: 1.25rem;"></ion-icon> Iniciar Sesión';
+        }
       }
     }
 
@@ -11160,6 +11166,11 @@
       const password = document.getElementById('newColabPassword').value.trim();
       const role = document.getElementById('newColabRole').value;
 
+      if (!password) {
+        alert('Por favor ingrese una contraseña de acceso para el nuevo colaborador.');
+        return;
+      }
+
       if (colaboradores.some(c => c.username.toLowerCase() === username.toLowerCase())) {
         alert('Ese nombre de usuario ya está registrado en el sistema.');
         return;
@@ -11182,27 +11193,30 @@
         id: Date.now(),
         name,
         username,
-        password,
         role,
         permissions
       };
 
-      colaboradores.push(newColab);
-      saveStorageData(true);
-      const res = await syncColabToSupabase(newColab);
-      if (res && !res.success && res.error) {
-        if (res.error.code === '23505' || (res.error.message && (res.error.message.includes('duplicate') || res.error.message.includes('unique') || res.error.message.includes('collaborators_username_key')))) {
-          // Revertir push local si ya existía en la BD
-          colaboradores = colaboradores.filter(c => c.id !== newColab.id);
-          saveStorageData(true);
-          renderDBColaboradores();
+      const res = await syncColabToSupabase(newColab, password);
+      if (res && !res.success) {
+        const errMsg = res.error?.message || '';
+        if (errMsg.includes('duplicate') || errMsg.includes('unique') || errMsg.includes('collaborators_username_key')) {
           alert(`⚠️ El nombre de usuario "@${username}" ya está registrado en la base de datos de Supabase. Por favor elegí otro nombre de usuario.`);
+          return;
+        } else {
+          alert(`⚠️ Error al guardar colaborador en Supabase: ${errMsg || 'Verifique la conexión.'}`);
           return;
         }
       }
+
+      colaboradores.push(newColab);
+      saveStorageData(false);
       closeAddColaboradorModal();
+      document.getElementById('newColabName').value = '';
+      document.getElementById('newColabUsername').value = '';
+      document.getElementById('newColabPassword').value = '';
       renderDBColaboradores();
-      alert(`✅ ¡Colaborador "${name}" registrado y sincronizado en la base de datos!`);
+      alert(`✅ ¡Colaborador "${name}" registrado con contraseña cifrada en la base de datos!`);
     }
 
     function openEditColaboradorModal(id) {
@@ -11212,7 +11226,7 @@
       document.getElementById('editColabId').value = col.id;
       document.getElementById('editColabName').value = col.name;
       document.getElementById('editColabUsername').value = col.username;
-      document.getElementById('editColabPassword').value = col.password;
+      document.getElementById('editColabPassword').value = ''; // Contraseña en blanco por seguridad
       document.getElementById('editColabRole').value = col.role || 'Administrador';
 
       const p = col.permissions || {
@@ -11246,9 +11260,10 @@
         return;
       }
 
+      const newPassword = document.getElementById('editColabPassword').value.trim();
+
       col.name = document.getElementById('editColabName').value.trim();
       col.username = newUsername;
-      col.password = document.getElementById('editColabPassword').value.trim();
       col.role = document.getElementById('editColabRole').value;
 
       col.permissions = {
@@ -11265,15 +11280,21 @@
       };
 
       if (currentUser && currentUser.id === id) {
-        currentUser = col;
+        currentUser = { ...currentUser, name: col.name, username: col.username, role: col.role, permissions: col.permissions };
         document.getElementById('headerUserName').textContent = col.name;
         document.getElementById('headerUserAvatar').textContent = col.name.charAt(0).toUpperCase();
         applyUserPermissions(col);
       }
 
-      saveStorageData(true);
-      await syncColabToSupabase(col);
+      const res = await syncColabToSupabase(col, newPassword || null);
+      if (res && !res.success) {
+        alert(`⚠️ Error al actualizar colaborador en Supabase: ${res.error?.message || 'Verifique la conexión.'}`);
+        return;
+      }
+
+      saveStorageData(false);
       closeEditColaboradorModal();
+      document.getElementById('editColabPassword').value = '';
       renderDBColaboradores();
       alert(`✅ ¡Colaborador "${col.name}" y sus permisos fueron actualizados en la base de datos!`);
     }

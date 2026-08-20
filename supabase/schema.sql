@@ -1,10 +1,14 @@
 -- ==============================================================================
 -- GOMEX NUTRITION - ESQUEMA DE BASE DE DATOS SUPABASE (POSTGRESQL)
--- Proyecto: https://jdhscjhashyqmnmuksuk.supabase.co
+-- Proyecto: https://vdghijvwhrbiorytnpof.supabase.co
 -- Región: sa-east-1 (São Paulo)
 -- Descripción: Tablas, restricciones, políticas de seguridad (RLS),
---              publicación en tiempo real y datos semilla iniciales.
+--              autenticación segura con pgcrypto / bcrypt, publicación
+--              en tiempo real y datos semilla iniciales.
 -- ==============================================================================
+
+-- 0. EXTENSIONES REQUERIDAS
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- 1. TABLA: categories (Categorías de productos)
 CREATE TABLE IF NOT EXISTS public.categories (
@@ -110,6 +114,154 @@ CREATE TABLE IF NOT EXISTS public.store_config (
 );
 
 -- ==============================================================================
+-- SEGURIDAD CRIPTOGRÁFICA Y TRIGGERS DE HASHEO AUTOMÁTICO (BCRYPT)
+-- ==============================================================================
+
+-- Función trigger para asegurar que las contraseñas siempre se almacenen con hash bcrypt
+CREATE OR REPLACE FUNCTION public.hash_collaborator_password_trigger()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'UPDATE' AND (NEW.password IS NULL OR length(trim(NEW.password)) = 0) THEN
+        NEW.password := OLD.password;
+    ELSIF NEW.password IS NOT NULL AND NEW.password NOT LIKE '$2%' THEN
+        NEW.password := crypt(NEW.password, gen_salt('bf', 10));
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_hash_collaborator_password ON public.collaborators;
+CREATE TRIGGER trg_hash_collaborator_password
+BEFORE INSERT OR UPDATE ON public.collaborators
+FOR EACH ROW
+EXECUTE FUNCTION public.hash_collaborator_password_trigger();
+
+-- ==============================================================================
+-- FUNCIONES RPC DE SERVIDOR PARA AUTENTICACIÓN Y GESTIÓN SEGURA
+-- ==============================================================================
+
+-- 1. Inicio de Sesión Seguro (no expone contraseñas ni hashes al cliente)
+CREATE OR REPLACE FUNCTION public.login_collaborator(
+    p_username TEXT,
+    p_password TEXT
+)
+RETURNS JSONB AS $$
+DECLARE
+    v_colab RECORD;
+BEGIN
+    SELECT * INTO v_colab
+    FROM public.collaborators
+    WHERE LOWER(username) = LOWER(TRIM(p_username))
+    LIMIT 1;
+
+    IF NOT FOUND THEN
+        RETURN jsonb_build_object(
+            'success', false,
+            'message', 'Usuario o contraseña incorrectos'
+        );
+    END IF;
+
+    IF v_colab.password = crypt(p_password, v_colab.password) THEN
+        RETURN jsonb_build_object(
+            'success', true,
+            'user', jsonb_build_object(
+                'id', v_colab.id,
+                'name', v_colab.name,
+                'username', v_colab.username,
+                'role', v_colab.role,
+                'permissions', v_colab.permissions
+            )
+        );
+    ELSE
+        RETURN jsonb_build_object(
+            'success', false,
+            'message', 'Usuario o contraseña incorrectos'
+        );
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 2. Creación / Actualización Segura de Colaboradores
+CREATE OR REPLACE FUNCTION public.admin_upsert_collaborator(
+    p_id BIGINT,
+    p_name TEXT,
+    p_username TEXT,
+    p_password TEXT,
+    p_role TEXT,
+    p_permissions JSONB
+)
+RETURNS JSONB AS $$
+DECLARE
+    v_existing RECORD;
+    v_result RECORD;
+    v_final_id BIGINT;
+BEGIN
+    IF p_id IS NOT NULL AND p_id > 0 THEN
+        SELECT * INTO v_existing FROM public.collaborators WHERE id = p_id;
+    END IF;
+
+    IF v_existing.id IS NOT NULL THEN
+        -- Actualización
+        UPDATE public.collaborators
+        SET
+            name = COALESCE(NULLIF(TRIM(p_name), ''), name),
+            username = COALESCE(NULLIF(TRIM(p_username), ''), username),
+            password = CASE
+                WHEN p_password IS NOT NULL AND length(trim(p_password)) > 0
+                THEN crypt(p_password, gen_salt('bf', 10))
+                ELSE password
+            END,
+            role = COALESCE(p_role, role),
+            permissions = COALESCE(p_permissions, permissions)
+        WHERE id = p_id
+        RETURNING id, name, username, role, permissions, created_at INTO v_result;
+    ELSE
+        -- Inserción
+        IF p_password IS NULL OR length(trim(p_password)) = 0 THEN
+            RETURN jsonb_build_object(
+                'success', false,
+                'message', 'La contraseña es obligatoria para nuevos colaboradores.'
+            );
+        END IF;
+
+        v_final_id := COALESCE(p_id, (EXTRACT(EPOCH FROM now()) * 1000)::BIGINT);
+
+        INSERT INTO public.collaborators (id, name, username, password, role, permissions)
+        VALUES (
+            v_final_id,
+            TRIM(p_name),
+            TRIM(p_username),
+            crypt(p_password, gen_salt('bf', 10)),
+            COALESCE(p_role, 'Vendedor'),
+            COALESCE(p_permissions, '{"pos": true, "notas": true, "stock": true, "config": false, "ventas": true, "catalogo": true, "clientes": true, "presupuesto": true, "colaboradores": false, "importaciones": false}'::jsonb)
+        )
+        RETURNING id, name, username, role, permissions, created_at INTO v_result;
+    END IF;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'collaborator', jsonb_build_object(
+            'id', v_result.id,
+            'name', v_result.name,
+            'username', v_result.username,
+            'role', v_result.role,
+            'permissions', v_result.permissions,
+            'created_at', v_result.created_at
+        )
+    );
+EXCEPTION WHEN OTHERS THEN
+    RETURN jsonb_build_object(
+        'success', false,
+        'message', SQLERRM
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Permisos de ejecución de RPCs
+GRANT EXECUTE ON FUNCTION public.login_collaborator(TEXT, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_upsert_collaborator(BIGINT, TEXT, TEXT, TEXT, TEXT, JSONB) TO anon, authenticated;
+
+-- ==============================================================================
 -- SEGURIDAD ROW LEVEL SECURITY (RLS) Y POLÍTICAS DE ACCESO
 -- ==============================================================================
 
@@ -133,12 +285,12 @@ DROP POLICY IF EXISTS "Allow public all on expenses" ON public.expenses;
 DROP POLICY IF EXISTS "Allow public all on store_config" ON public.store_config;
 
 DROP POLICY IF EXISTS "Public read categories" ON public.categories;
-DROP POLICY IF EXISTS "Public insert/update categories" ON public.categories;
+DROP POLICY IF EXISTS "Public insert categories" ON public.categories;
 DROP POLICY IF EXISTS "Public modify categories" ON public.categories;
 DROP POLICY IF EXISTS "Public delete categories" ON public.categories;
 
 DROP POLICY IF EXISTS "Public read products" ON public.products;
-DROP POLICY IF EXISTS "Public insert/update products" ON public.products;
+DROP POLICY IF EXISTS "Public insert products" ON public.products;
 DROP POLICY IF EXISTS "Public update products" ON public.products;
 DROP POLICY IF EXISTS "Public delete products" ON public.products;
 
@@ -161,7 +313,7 @@ DROP POLICY IF EXISTS "Public insert sales" ON public.sales;
 DROP POLICY IF EXISTS "Public delete sales" ON public.sales;
 
 DROP POLICY IF EXISTS "Public read collaborators" ON public.collaborators;
-DROP POLICY IF EXISTS "Public manage collaborators" ON public.collaborators;
+DROP POLICY IF EXISTS "Public insert collaborators" ON public.collaborators;
 DROP POLICY IF EXISTS "Public update collaborators" ON public.collaborators;
 DROP POLICY IF EXISTS "Public delete collaborators" ON public.collaborators;
 
@@ -169,7 +321,7 @@ DROP POLICY IF EXISTS "Public read expenses" ON public.expenses;
 DROP POLICY IF EXISTS "Public insert expenses" ON public.expenses;
 DROP POLICY IF EXISTS "Public delete expenses" ON public.expenses;
 
--- Creación de políticas de acceso granulares para cliente y operaciones del POS
+-- Creación de políticas de acceso
 -- 1. Categorías
 CREATE POLICY "Public read categories" ON public.categories FOR SELECT TO anon, authenticated USING (true);
 CREATE POLICY "Public insert categories" ON public.categories FOR INSERT TO anon, authenticated WITH CHECK (name IS NOT NULL AND length(name) > 0);
@@ -205,7 +357,8 @@ CREATE POLICY "Public insert sales" ON public.sales FOR INSERT TO anon, authenti
 CREATE POLICY "Public delete sales" ON public.sales FOR DELETE TO anon, authenticated USING (id IS NOT NULL);
 
 -- 7. Colaboradores y Gastos
-CREATE POLICY "Allow public all on collaborators" ON public.collaborators FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public read collaborators" ON public.collaborators FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public delete collaborators" ON public.collaborators FOR DELETE TO anon, authenticated USING (id IS NOT NULL);
 
 CREATE POLICY "Public read expenses" ON public.expenses FOR SELECT TO anon, authenticated USING (true);
 CREATE POLICY "Public insert expenses" ON public.expenses FOR INSERT TO anon, authenticated WITH CHECK (id IS NOT NULL);
@@ -259,7 +412,7 @@ INSERT INTO public.clients (cuit, name, gym, location, province, phone, email) V
 ('00-00000000-0', 'Consumidor Final', 'GOMEX Headquarter', 'Venta Mostrador', 'Buenos Aires', '-', '-')
 ON CONFLICT (cuit) DO NOTHING;
 
--- 4. Colaboradores iniciales
+-- 4. Colaboradores iniciales (las contraseñas '123' son convertidas automáticamente a bcrypt por el trigger)
 INSERT INTO public.collaborators (id, name, username, password, role, permissions) VALUES
 (1, 'David Ramírez (SuperAdmin)', 'superadmin', '123', 'Super Administrador', '{"pos": true, "notas": true, "stock": true, "config": true, "ventas": true, "catalogo": true, "clientes": true, "presupuesto": true, "colaboradores": true, "importaciones": true}'::jsonb),
 (2, 'Administrador GOMEX', 'admin', '123', 'Administrador', '{"pos": true, "notas": true, "stock": true, "config": true, "ventas": true, "catalogo": true, "clientes": true, "presupuesto": true, "colaboradores": true, "importaciones": true}'::jsonb)
@@ -294,3 +447,4 @@ INSERT INTO public.store_config (id, data) VALUES
   }
 }'::jsonb)
 ON CONFLICT (id) DO NOTHING;
+
