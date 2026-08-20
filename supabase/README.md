@@ -6,10 +6,10 @@ Este directorio contiene los scripts SQL necesarios para inicializar y migrar la
 
 ## 📌 Datos del Proyecto
 
-- **Project URL:** `https://vdghijvwhrbiorytnpof.supabase.co`
-- **Project ID / Reference:** `vdghijvwhrbiorytnpof`
-- **Dashboard URL:** [https://supabase.com/dashboard/project/vdghijvwhrbiorytnpof](https://supabase.com/dashboard/project/vdghijvwhrbiorytnpof)
-- **SQL Editor:** [https://supabase.com/dashboard/project/vdghijvwhrbiorytnpof/sql/new](https://supabase.com/dashboard/project/vdghijvwhrbiorytnpof/sql/new)
+- **Project URL:** `https://jdhscjhashyqmnmuksuk.supabase.co`
+- **Project ID / Reference:** `jdhscjhashyqmnmuksuk`
+- **Dashboard URL:** [https://supabase.com/dashboard/project/jdhscjhashyqmnmuksuk](https://supabase.com/dashboard/project/jdhscjhashyqmnmuksuk)
+- **SQL Editor:** [https://supabase.com/dashboard/project/jdhscjhashyqmnmuksuk/sql/new](https://supabase.com/dashboard/project/jdhscjhashyqmnmuksuk/sql/new)
 
 ---
 

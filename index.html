@@ -7250,9 +7250,9 @@
     // INTEGRACIÓN Y SINCRONIZACIÓN SUPABASE CLOUD (POSTGRESQL)
     // ==========================================
     const defaultSupabaseConfig = {
-      url: "https://vdghijvwhrbiorytnpof.supabase.co",
-      anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkZ2hpanZ3aHJiaW9yeXRucG9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNjM4NjMsImV4cCI6MjEwMjYzOTg2M30.3limv7B6kynxtUTVURskHwCvGrxvuW5LMkpqjfbYudw",
-      projectId: "vdghijvwhrbiorytnpof",
+      url: "https://jdhscjhashyqmnmuksuk.supabase.co",
+      anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkaHNjamhhc2h5cW1ubXVrc3VrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNDcwODAsImV4cCI6MjEwMjcyMzA4MH0.Jr-bD7XquS34_8GIblgGCfsB-SoPxvb01WtmSG4QhEk",
+      projectId: "jdhscjhashyqmnmuksuk",
       region: "sa-east-1 (São Paulo)"
     };
 
@@ -7504,7 +7504,6 @@
         const savedConfig = localStorage.getItem('gomex_supabase_config');
         if (savedConfig) {
           const parsed = JSON.parse(savedConfig);
-          // Si no tiene el nuevo projectId activo, forzar la nueva configuración oficial
           if (!parsed || !parsed.url || parsed.projectId !== 'jdhscjhashyqmnmuksuk') {
             supabaseConfig = { ...defaultSupabaseConfig };
             localStorage.setItem('gomex_supabase_config', JSON.stringify(supabaseConfig));
@@ -7808,9 +7807,9 @@
     function openSupabaseConfigModal() {
       const modal = document.getElementById('supabaseConfigModal');
       if (modal) {
-        document.getElementById('sbUrlInput').value = supabaseConfig.url || 'https://vdghijvwhrbiorytnpof.supabase.co';
+        document.getElementById('sbUrlInput').value = supabaseConfig.url || 'https://jdhscjhashyqmnmuksuk.supabase.co';
         document.getElementById('sbAnonKeyInput').value = supabaseConfig.anonKey || '';
-        document.getElementById('sbProjectIdInput').value = supabaseConfig.projectId || 'vdghijvwhrbiorytnpof';
+        document.getElementById('sbProjectIdInput').value = supabaseConfig.projectId || 'jdhscjhashyqmnmuksuk';
         document.getElementById('sbRegionInput').value = supabaseConfig.region || 'sa-east-1 (São Paulo)';
         modal.style.display = 'flex';
       }

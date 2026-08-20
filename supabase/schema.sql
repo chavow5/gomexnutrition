@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- GOMEX NUTRITION - ESQUEMA DE BASE DE DATOS SUPABASE (POSTGRESQL)
--- Proyecto: https://vdghijvwhrbiorytnpof.supabase.co
+-- Proyecto: https://jdhscjhashyqmnmuksuk.supabase.co
 -- Región: sa-east-1 (São Paulo)
 -- Descripción: Tablas, restricciones, políticas de seguridad (RLS),
 --              autenticación segura con pgcrypto / bcrypt, publicación
@@ -124,11 +124,11 @@ BEGIN
     IF TG_OP = 'UPDATE' AND (NEW.password IS NULL OR length(trim(NEW.password)) = 0) THEN
         NEW.password := OLD.password;
     ELSIF NEW.password IS NOT NULL AND NEW.password NOT LIKE '$2%' THEN
-        NEW.password := crypt(NEW.password, gen_salt('bf', 10));
+        NEW.password := extensions.crypt(NEW.password, extensions.gen_salt('bf', 10));
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions;
 
 DROP TRIGGER IF EXISTS trg_hash_collaborator_password ON public.collaborators;
 CREATE TRIGGER trg_hash_collaborator_password
@@ -161,7 +161,7 @@ BEGIN
         );
     END IF;
 
-    IF v_colab.password = crypt(p_password, v_colab.password) THEN
+    IF v_colab.password = extensions.crypt(p_password, v_colab.password) THEN
         RETURN jsonb_build_object(
             'success', true,
             'user', jsonb_build_object(
@@ -179,7 +179,7 @@ BEGIN
         );
     END IF;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions;
 
 -- 2. Creación / Actualización Segura de Colaboradores
 CREATE OR REPLACE FUNCTION public.admin_upsert_collaborator(
@@ -208,7 +208,7 @@ BEGIN
             username = COALESCE(NULLIF(TRIM(p_username), ''), username),
             password = CASE
                 WHEN p_password IS NOT NULL AND length(trim(p_password)) > 0
-                THEN crypt(p_password, gen_salt('bf', 10))
+                THEN extensions.crypt(p_password, extensions.gen_salt('bf', 10))
                 ELSE password
             END,
             role = COALESCE(p_role, role),
@@ -231,7 +231,7 @@ BEGIN
             v_final_id,
             TRIM(p_name),
             TRIM(p_username),
-            crypt(p_password, gen_salt('bf', 10)),
+            extensions.crypt(p_password, extensions.gen_salt('bf', 10)),
             COALESCE(p_role, 'Vendedor'),
             COALESCE(p_permissions, '{"pos": true, "notas": true, "stock": true, "config": false, "ventas": true, "catalogo": true, "clientes": true, "presupuesto": true, "colaboradores": false, "importaciones": false}'::jsonb)
         )
@@ -255,11 +255,12 @@ EXCEPTION WHEN OTHERS THEN
         'message', SQLERRM
     );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions;
 
 -- Permisos de ejecución de RPCs
-GRANT EXECUTE ON FUNCTION public.login_collaborator(TEXT, TEXT) TO anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.admin_upsert_collaborator(BIGINT, TEXT, TEXT, TEXT, TEXT, JSONB) TO anon, authenticated;
+GRANT ALL ON SCHEMA public TO anon, authenticated, postgres, service_role;
+GRANT EXECUTE ON FUNCTION public.login_collaborator(TEXT, TEXT) TO anon, authenticated, postgres, service_role;
+GRANT EXECUTE ON FUNCTION public.admin_upsert_collaborator(BIGINT, TEXT, TEXT, TEXT, TEXT, JSONB) TO anon, authenticated, postgres, service_role;
 
 -- ==============================================================================
 -- SEGURIDAD ROW LEVEL SECURITY (RLS) Y POLÍTICAS DE ACCESO
