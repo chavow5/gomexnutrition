@@ -198,6 +198,63 @@
       box-shadow: 0 6px 22px rgba(56, 189, 248, 0.55);
     }
 
+    .teravena-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 4px 10px 4px 6px;
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+      transition: all 0.25s ease;
+    }
+
+    .teravena-header-badge:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(74, 222, 128, 0.4);
+    }
+
+    .teravena-header-badge img {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #ffffff;
+      padding: 1px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important;
+    }
+
+    .teravena-header-badge-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+
+    .teravena-header-badge-sub {
+      font-size: 0.62rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      font-weight: 600;
+    }
+
+    .teravena-header-badge-main {
+      font-size: 0.74rem;
+      color: #4ade80;
+      font-weight: 700;
+    }
+
+    .teravena-trust-img {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #ffffff;
+      padding: 2px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
     .ecom-nav-links {
       display: flex;
       align-items: center;
@@ -1879,6 +1936,10 @@
       .ecom-brand img {
         height: 38px !important;
         max-height: 38px !important;
+      }
+
+      .teravena-header-badge {
+        display: none !important;
       }
 
       .ecom-nav-links {
@@ -4252,9 +4313,18 @@
     <!-- Header / Navbar -->
     <header class="ecom-header">
       <div class="ecom-nav-container">
-        <a href="#hero" class="ecom-brand" title="GOMEX Nutrition">
-          <img src="public/logo.jpg" onerror="this.onerror=null; this.src='public/logo.jpg';" alt="GOMEX Nutrition">
-        </a>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <a href="#hero" class="ecom-brand" title="GOMEX Nutrition La Rioja">
+            <img src="public/logo.jpg" onerror="this.onerror=null; this.src='public/logo.jpg';" alt="GOMEX Nutrition La Rioja">
+          </a>
+          <div class="teravena-header-badge" title="Distribuidora Teravena Group — Distribuidor Oficial GOMEX La Rioja">
+            <img src="public/teravena-logo.png" alt="Teravena Group">
+            <div class="teravena-header-badge-text">
+              <span class="teravena-header-badge-sub">Distribuidora</span>
+              <span class="teravena-header-badge-main">Teravena Group</span>
+            </div>
+          </div>
+        </div>
 
         <div class="ecom-nav-actions">
           <button type="button" class="btn-ecom-cart" onclick="toggleEcommerceCart(true)" title="Ver Carrito de Compras">
@@ -4298,6 +4368,10 @@
           </div>
 
           <div class="hero-trust-badges">
+            <div class="hero-trust-item" style="border-color: rgba(74, 222, 128, 0.25); background: rgba(74, 222, 128, 0.06);">
+              <img src="public/teravena-logo.png" alt="Teravena Group" class="teravena-trust-img">
+              <div class="hero-trust-text">Distribuidor Oficial Gomex: <strong style="color:#4ade80;">Teravena Group</strong></div>
+            </div>
             <div class="hero-trust-item">
               <div class="hero-trust-icon">🇦🇷</div>
               <div class="hero-trust-text">Industria Argentina</div>
@@ -4446,8 +4520,17 @@
     <footer class="ecom-footer" id="contacto">
       <div class="footer-container">
         <div class="footer-brand">
-          <img src="public/logo.jpg" onerror="this.src='public/logo.jpg'" alt="GOMEX Nutrition">
-          <p>Suplementación en formato gomita masticable con respaldo científico. Industria Argentina.</p>
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">
+            <img src="public/logo.jpg" onerror="this.src='public/logo.jpg'" alt="GOMEX Nutrition La Rioja">
+            <div style="display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); padding: 5px 12px; border-radius: 14px;">
+              <img src="public/teravena-logo.png" alt="Teravena Group" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: #fff; padding: 2px;">
+              <div>
+                <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Distribuidora Oficial</div>
+                <div style="font-size: 0.82rem; color: #4ade80; font-weight: 700;">Teravena Group</div>
+              </div>
+            </div>
+          </div>
+          <p>Suplementación en formato gomita masticable con respaldo científico. Distribución oficial en La Rioja por <strong>Teravena Group</strong>.</p>
         </div>
 
         <div class="footer-col">
@@ -4486,7 +4569,7 @@
       </div>
 
       <div class="footer-bottom">
-        <div>© 2026 GOMEX Nutrition Argentina S.R.L. Todos los derechos reservados.</div>
+        <div>© 2026 GOMEX Nutrition Argentina S.R.L. | Distribuidora Teravena Group — La Rioja. Todos los derechos reservados.</div>
         <div
           style="display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--celeste-brand); font-weight: 700; font-size: 0.82rem;">
           <ion-icon name="code-slash-outline" style="font-size: 1.1rem;"></ion-icon>
@@ -4843,11 +4926,15 @@
 
     <!-- Sidebar POS -->
     <aside id="sidebar">
-      <div class="brand" style="justify-content: center; padding: 15px;">
+      <div class="brand" style="justify-content: center; padding: 15px 10px; flex-direction: column; gap: 8px;">
         <div class="brand-logo" style="display:flex; justify-content:center; align-items:center;">
           <img src="public/logo.jpg" onerror="this.onerror=null; this.src='public/logo.jpg';"
             style="max-height: 44px; width: auto; object-fit: contain; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 168, 232, 0.3);"
             alt="GOMEX Nutrition Logo">
+        </div>
+        <div style="font-size: 0.68rem; color: #4ade80; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; text-align: center; display: flex; align-items: center; gap: 5px; justify-content: center; background: rgba(74, 222, 128, 0.08); padding: 3px 8px; border-radius: 10px; border: 1px solid rgba(74, 222, 128, 0.2);">
+          <img src="public/teravena-logo.png" style="width: 14px; height: 14px; border-radius: 50%; background: #fff; object-fit: cover;">
+          <span>Teravena Group</span>
         </div>
       </div>
 
@@ -5883,14 +5970,18 @@
         <ion-icon name="close-outline"></ion-icon>
       </button>
       <div class="login-header">
-        <div style="text-align: center; margin-bottom: 14px;">
+        <div style="text-align: center; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;">
           <img src="public/logo.jpg" onerror="this.onerror=null; this.src='public/logo.jpg';"
-            style="max-height: 54px; width: auto; border-radius: 12px; box-shadow: 0 4px 14px rgba(0, 168, 232, 0.35); display: inline-block;"
+            style="max-height: 52px; width: auto; border-radius: 12px; box-shadow: 0 4px 14px rgba(0, 168, 232, 0.35); display: inline-block;"
             alt="GOMEX Nutrition">
+          <div style="display: flex; align-items: center; gap: 6px; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 5px 10px; border-radius: 12px;" title="Distribuidora Teravena Group">
+            <img src="public/teravena-logo.png" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover;">
+            <span style="font-size: 0.74rem; color: #15803d; font-weight: 700;">Teravena Group</span>
+          </div>
         </div>
         <h1 class="login-logo-title" style="font-size: 1.6rem;">GOMEX <span
             style="color:var(--celeste-brand);">POS</span></h1>
-        <p class="login-subtitle">Sistema de Facturación, Stock & Control de Ventas</p>
+        <p class="login-subtitle">Sistema de Facturación, Stock & Control de Ventas • Distribuidora Teravena Group</p>
       </div>
 
       <div id="loginError"
